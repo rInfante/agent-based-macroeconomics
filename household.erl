@@ -10,6 +10,33 @@ handle_event/3, handle_sync_event/4, handle_info/3,terminate/3, code_change/4,
  %cusatom state names
 normal/2]).
 
+ %TODO:move to include file to share this definition across several modules	
+-record(sim_config, 
+	{
+		days_in_one_month,
+		num_household_to_firm_trading_relations,
+		num_consecutive_months_with_all_positions_filled_upper_limit,%gamma
+		wage_growth_rate_uniform_distribution_upper_support,%delta
+		inventory_upper_limit_ratio,%uphi_upper
+		inventory_lower_limit_ratio,%uphi_lower
+		price_upper_limit_ratio,% lphi_upper
+		price_lower_limit_ratio,%lphi_lower
+		probability_of_setting_new_price,%theta
+		price_growth_rate_uniform_distribution_upper_support,%upsilon
+		probability_of_household_picking_new_provider_firm,
+        price_threshold_of_household_picking_new_provider_firm,
+		max_number_potential_employers_visited,
+		probability_of_household_visiting_potential_new_employer,
+		planned_consumption_increase_decaying_rate,
+		max_number_provider_firms_visited,
+		technology_productivity_parameter,%lambda
+		claimed_wage_rate_percentage_reduction_if_unemployed,
+		
+		firm_ids,
+		household_ids
+    }).	
+	
+ %TODO:move to include file to share this definition across several modules	
 -record(household_state, 
 	{
 		instance_name, 
@@ -18,7 +45,6 @@ normal/2]).
 		planned_monthly_consumption_expenditure, %c_r_h
 		provider_firms_ids, %type A firms
 		employer_firm_id, % type B firm
-		days_in_one_month,
 		
 		sim_configuration
 	}).
@@ -60,7 +86,7 @@ normal(Event, State) ->
 			io:format("Household ~s got payrise... from ~w to ~w~n",[State#household_state.instance_name, State#household_state.reservation_wage_rate_h, NewWage]),
 			{next_state, normal, #household_state{reservation_wage_rate_h=NewWage}, 1000};
 		spend ->
-			Expenditure = State#household_state.planned_monthly_consumption_expenditure/State#household_state.days_in_one_month,
+			Expenditure = State#household_state.planned_monthly_consumption_expenditure/State#household_state.sim_configuration#sim_config.days_in_one_month,
 			io:format("Household ~s is spending ~w~n",[State#household_state.instance_name, Expenditure]),
 			%REMOVE THIS!{next_state, normal, #household_state{instance_name=State#household_state.instance_name, reservation_wage_rate_h=State#household_state.reservation_wage_rate_h, liquidity_h=State#household_state.liquidity_h-Expenditure, planned_monthly_consumption_expenditure=State#household_state.planned_monthly_consumption_expenditure, provider_firms_ids=State#household_state.provider_firms_ids, employer_firm_id=State#household_state.employer_firm_id, days_in_one_month=State#household_state.days_in_one_month}, 10000};
 			{next_state, normal, #household_state{liquidity_h=State#household_state.liquidity_h-Expenditure}, 10000};

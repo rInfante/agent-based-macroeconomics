@@ -7,7 +7,7 @@
 %% gen_fsm callbacks
 -export([init/1,
 handle_event/3, handle_sync_event/4, handle_info/3,terminate/3, code_change/4,
- %cusatom state names
+ %cusatom sim_config names
 normal/2]).
 
 %TODO:move to include file to share this definition across several modules
@@ -58,33 +58,35 @@ new_step(StepNumber) ->
 %GEN_FSM CALLBACKS
 init({DaysInOneMonth}) ->
 	io:format("initialising SIM state with DaysInOneMonth: ~w~n",[DaysInOneMonth]),
-	{ok, normal, #state{days_in_one_month=DaysInOneMonth}, 0}.
+	{ok, normal, #sim_config{days_in_one_month=DaysInOneMonth}, 0}.
 
 normal(Event, State) ->
-	io:format("Simulator state is NORMAL. DaysInOneMonth: ~w~n",[State#state.days_in_one_month]),
+	io:format("Simulator sim_config is NORMAL. DaysInOneMonth: ~w~n",[State#sim_config.days_in_one_month]),
 	case Event of
 		{new_step, StepNumber} ->
 			io:format("New simulation step: ~w~n",[StepNumber]),
 			if 
-				StepNumber rem State#state.days_in_one_month == 1.0 ->
-					MonthNumber= 1 + trunc(StepNumber / State#state.days_in_one_month),
-					io:format("This step is the first day of the month. Month number: ~w~n",[MonthNumber]),	
-					household_fsm_m:first_day_of_month(MonthNumber),
-					firm_fsm_m:first_day_of_month(MonthNumber);
+				StepNumber rem State#sim_config.days_in_one_month == 1.0 ->
+					MonthNumber= 1 + trunc(StepNumber / State#sim_config.days_in_one_month),
+					io:format("This step is the first day of the month. Month number: ~w~n",[MonthNumber]),						
+					household:first_day_of_month(MonthNumber),%also inject Sim_State
+					firm:first_day_of_month(MonthNumber);%also inject Sim_State
 				true ->
 					io:format("This step is NOT the first day of the month.~n",[])
 			end,
 			if 
-				StepNumber rem State#state.days_in_one_month == 0.0 ->
-					MonthNumber1= StepNumber / State#state.days_in_one_month,
-					io:format("This step is the last day of the month. Month number: ~w~n",[MonthNumber1]),	
-					household_fsm_m:last_day_of_month(MonthNumber1),
-					firm_fsm_m:last_day_of_month(MonthNumber1);
+				StepNumber rem State#sim_config.days_in_one_month == 0.0 ->
+					MonthNumber1= StepNumber / State#sim_config.days_in_one_month,
+					io:format("This step is the last day of the month. Month number: ~w~n",[MonthNumber1]),					
+					household_:last_day_of_month(MonthNumber1),%also inject Sim_State
+					firm:last_day_of_month(MonthNumber1);%also inject Sim_State
 				true ->
 					io:format("This step is NOT the last day of the month.~n",[])
-			end,
-			household_fsm_m:daily_step(StepNumber),
-			firm_fsm_m:daily_step(StepNumber),
+			end,			
+			household:daily_step(StepNumber),%also inject Sim_State
+			firm:daily_step(StepNumber),%also inject Sim_State
+			%TODO:here query all firms and households to regenerate household and firm tuple list containing all firm-household relationships
+			%then inject these into Sim state (sim_configuration record)
 			{next_state, normal, State, 10000};
 		timeout ->
 			io:format("Nothing has happened in the simulator...~n"),

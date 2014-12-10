@@ -1,10 +1,17 @@
 -module(item_selection).
-
+%%public
+-export(
+		[
+			choose_weighted_random_item/1,
+			choose_random_item/1,
+			filter_out_second_list_from_first_list/2, 
+			replace_item_in_list/3
+		]
+		).
+%%test
 -export([
-		only_quantities/1, cumulative_quantities/1, cumulative_ranges/1, indexed_items/1, 
-		find_indexed_cumulative_range/2, 
-		choose_weighted_random_item/1,choose_random_item/1,
-		filter_out_second_list_from_first_list/2, replace_item_in_list/3
+			only_quantities/1, cumulative_quantities/1, cumulative_ranges/1, indexed_items/1, 
+			find_indexed_cumulative_range/2		
 		]).
 
 %ItemQuantityTupleList = list of tuples {item, N}. Example: [{a,1],{b,3},{c,2},{d,4},...]
@@ -35,7 +42,7 @@ indexed_items(ItemList) ->
 % 	where a single tuple is: {Index, {StartRange, EndRange}}
 %Value is a numeric value between 0 and the last value of the cumulative range
 find_indexed_cumulative_range(IndexedCumulativeRanges, Value) ->
-	lists:filter(fun({Index, {StartRange, EndRange}}) -> (StartRange =< Value) and (Value =< EndRange) end, IndexedCumulativeRanges).
+	lists:filter(fun({_Index, {StartRange, EndRange}}) -> (StartRange =< Value) and (Value =< EndRange) end, IndexedCumulativeRanges).
 		
 choose_weighted_random_item(ItemQuantityTupleList) ->
 	OnlyQuantities = only_quantities(ItemQuantityTupleList),
@@ -52,7 +59,7 @@ choose_random_item(ItemList) ->
 	Item = choose_weighted_random_item(ItemQuantityTupleList),
 	Item.
 
-%probably this function is redundant because already provided by lists library	
+%TODO:probably this function is redundant because already provided by lists library	
 filter_out_second_list_from_first_list(FirstList, SecondList) ->
 	lists:subtract(FirstList, SecondList).
 	
