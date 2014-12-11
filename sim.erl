@@ -2,7 +2,7 @@
 -behavior(gen_fsm).
 
 % public API
--export([start/1, start_link/1, new_step/1]).
+-export([start/20, start_link/20, new_step/1]).
 
 %% gen_fsm callbacks
 -export([init/1,
@@ -37,18 +37,105 @@ normal/2]).
     }).
 
 %%% PUBLIC API
-start(DaysInOneMonth) ->
-	household_fsm_m:start("HH1",1000, 2000, 200, 1, {1,2,3,4,5,6,7}, DaysInOneMonth),
-	household_fsm_m:start("HH2",1500, 2500, 250, 2, {2,3,4,5,6,7,8}, DaysInOneMonth),
-	firm_fsm_m:start("FI1",10000,100000, 1500, 50, 20, 3,DaysInOneMonth),
-	firm_fsm_m:start("FI2",12000,120000, 1700, 70, 30, 3,DaysInOneMonth),
-	gen_fsm:start({local, sim}, ?MODULE, {DaysInOneMonth}, []).
-start_link(DaysInOneMonth) ->
-	household_fsm_m:start_link("HH1",1000, 2000, 200, 1, {1,2,3,4,5,6,7}, DaysInOneMonth),
-	household_fsm_m:start_link("HH2",1500, 2500, 250, 1, {1,2,3,4,5,6,7}, DaysInOneMonth),
-	firm_fsm_m:start_link("FI1",10000,100000, 1500, 50, 20, 3,DaysInOneMonth),
-	firm_fsm_m:start_link("FI2",12000,120000, 1700, 70, 30, 3,DaysInOneMonth),
-	gen_fsm:start_link({local, sim}, ?MODULE, {DaysInOneMonth}, []).
+start(	  NumDaysInAMonth,
+          NumHouseholdToFirmTradingRelations,
+          NumConsecutiveMonthsWithAllPositionsFilledUpperLimit,
+          WageGrowthRateUniformDistributionUpperSupport,
+          InventoryUpperLimitRatio,
+          InventoryLowerLimitRatio,
+          PriceUpperLimitRatio,
+          PriceLowerLimitRatio,
+          ProbabilityOfSettingNewPrice,
+          PriceGrowthRateUniformDistributionUpperSupport,
+          ProbabilityOfHouseholdPickingNewProviderFirm,
+          PriceThresholdOfHouseholdPickingNewProviderFirm,
+          MaxNumberPotentialEmployersVisited,
+          ProbabilityOfHouseholdVisitingPotentialNewEmployer,
+          PlannedConsumptionIncreaseDecayingRate,
+          MaxNumberProviderFirmsVisited,
+          TechnologyProductivityParameter,
+          ClaimedWageRatePercentageReductionIfUnemployed,
+		  
+		  FirmIds,
+		  HouseholdIds
+		  ) ->
+	SimConfiguration =  #sim_config{days_in_one_month=NumDaysInAMonth,
+		num_household_to_firm_trading_relations=NumHouseholdToFirmTradingRelations,
+		num_consecutive_months_with_all_positions_filled_upper_limit=NumConsecutiveMonthsWithAllPositionsFilledUpperLimit,%gamma
+		wage_growth_rate_uniform_distribution_upper_support=WageGrowthRateUniformDistributionUpperSupport,%delta
+		inventory_upper_limit_ratio=InventoryUpperLimitRatio,%uphi_upper
+		inventory_lower_limit_ratio=InventoryLowerLimitRatio,%uphi_lower
+		price_upper_limit_ratio=PriceUpperLimitRatio,% lphi_upper
+		price_lower_limit_ratio=PriceLowerLimitRatio,%lphi_lower
+		probability_of_setting_new_price=ProbabilityOfSettingNewPrice,%theta
+		price_growth_rate_uniform_distribution_upper_support=PriceGrowthRateUniformDistributionUpperSupport,%upsilon
+		probability_of_household_picking_new_provider_firm=ProbabilityOfHouseholdPickingNewProviderFirm,
+        price_threshold_of_household_picking_new_provider_firm=PriceThresholdOfHouseholdPickingNewProviderFirm,
+		max_number_potential_employers_visited=MaxNumberPotentialEmployersVisited,
+		probability_of_household_visiting_potential_new_employer=ProbabilityOfHouseholdVisitingPotentialNewEmployer,
+		planned_consumption_increase_decaying_rate=PlannedConsumptionIncreaseDecayingRate,
+		max_number_provider_firms_visited=MaxNumberProviderFirmsVisited,
+		technology_productivity_parameter=TechnologyProductivityParameter,%lambda
+		claimed_wage_rate_percentage_reduction_if_unemployed=ClaimedWageRatePercentageReductionIfUnemployed,
+		
+		firm_ids=FirmIds,
+		household_ids=HouseholdIds		
+    },
+	household_fsm_m:start("HH1",1000, 2000, 200, 1, {1,2,3,4,5,6,7}, SimConfiguration),
+	household_fsm_m:start("HH2",1500, 2500, 250, 2, {2,3,4,5,6,7,8}, SimConfiguration),
+	firm_fsm_m:start("FI1",10000,100000, 1500, 50, 20, 3,SimConfiguration),
+	firm_fsm_m:start("FI2",12000,120000, 1700, 70, 30, 3,SimConfiguration),
+	gen_fsm:start({local, sim}, ?MODULE, {SimConfiguration}, []).
+	
+start_link(	  NumDaysInAMonth,
+          NumHouseholdToFirmTradingRelations,
+          NumConsecutiveMonthsWithAllPositionsFilledUpperLimit,
+          WageGrowthRateUniformDistributionUpperSupport,
+          InventoryUpperLimitRatio,
+          InventoryLowerLimitRatio,
+          PriceUpperLimitRatio,
+          PriceLowerLimitRatio,
+          ProbabilityOfSettingNewPrice,
+          PriceGrowthRateUniformDistributionUpperSupport,
+          ProbabilityOfHouseholdPickingNewProviderFirm,
+          PriceThresholdOfHouseholdPickingNewProviderFirm,
+          MaxNumberPotentialEmployersVisited,
+          ProbabilityOfHouseholdVisitingPotentialNewEmployer,
+          PlannedConsumptionIncreaseDecayingRate,
+          MaxNumberProviderFirmsVisited,
+          TechnologyProductivityParameter,
+          ClaimedWageRatePercentageReductionIfUnemployed,
+		  
+		  FirmIds,
+		  HouseholdIds
+		  ) ->
+	SimConfiguration =  #sim_config{days_in_one_month=NumDaysInAMonth,
+		num_household_to_firm_trading_relations=NumHouseholdToFirmTradingRelations,
+		num_consecutive_months_with_all_positions_filled_upper_limit=NumConsecutiveMonthsWithAllPositionsFilledUpperLimit,%gamma
+		wage_growth_rate_uniform_distribution_upper_support=WageGrowthRateUniformDistributionUpperSupport,%delta
+		inventory_upper_limit_ratio=InventoryUpperLimitRatio,%uphi_upper
+		inventory_lower_limit_ratio=InventoryLowerLimitRatio,%uphi_lower
+		price_upper_limit_ratio=PriceUpperLimitRatio,% lphi_upper
+		price_lower_limit_ratio=PriceLowerLimitRatio,%lphi_lower
+		probability_of_setting_new_price=ProbabilityOfSettingNewPrice,%theta
+		price_growth_rate_uniform_distribution_upper_support=PriceGrowthRateUniformDistributionUpperSupport,%upsilon
+		probability_of_household_picking_new_provider_firm=ProbabilityOfHouseholdPickingNewProviderFirm,
+        price_threshold_of_household_picking_new_provider_firm=PriceThresholdOfHouseholdPickingNewProviderFirm,
+		max_number_potential_employers_visited=MaxNumberPotentialEmployersVisited,
+		probability_of_household_visiting_potential_new_employer=ProbabilityOfHouseholdVisitingPotentialNewEmployer,
+		planned_consumption_increase_decaying_rate=PlannedConsumptionIncreaseDecayingRate,
+		max_number_provider_firms_visited=MaxNumberProviderFirmsVisited,
+		technology_productivity_parameter=TechnologyProductivityParameter,%lambda
+		claimed_wage_rate_percentage_reduction_if_unemployed=ClaimedWageRatePercentageReductionIfUnemployed,
+		
+		firm_ids=FirmIds,
+		household_ids=HouseholdIds		
+    },		  
+	household_fsm_m:start_link("HH1",1000, 2000, 200, 1, {1,2,3,4,5,6,7}, SimConfiguration),
+	household_fsm_m:start_link("HH2",1500, 2500, 250, 1, {1,2,3,4,5,6,7}, SimConfiguration),
+	firm_fsm_m:start_link("FI1",10000,100000, 1500, 50, 20, 3,SimConfiguration),
+	firm_fsm_m:start_link("FI2",12000,120000, 1700, 70, 30, 3,SimConfiguration),
+	gen_fsm:start_link({local, sim}, ?MODULE, {SimConfiguration}, []).
 
 %%FSM PUBLIC API FUNCTIONS
 new_step(StepNumber) ->
@@ -56,9 +143,9 @@ new_step(StepNumber) ->
 	gen_fsm:send_event(sim, {new_step, StepNumber}).
 
 %GEN_FSM CALLBACKS
-init({DaysInOneMonth}) ->
-	io:format("initialising SIM state with DaysInOneMonth: ~w~n",[DaysInOneMonth]),
-	{ok, normal, #sim_config{days_in_one_month=DaysInOneMonth}, 0}.
+init(SimConfiguration) ->
+	io:format("initialising SIM state~n"),
+	{ok, normal, SimConfiguration, 0}.
 
 normal(Event, State) ->
 	io:format("Simulator sim_config is NORMAL. DaysInOneMonth: ~w~n",[State#sim_config.days_in_one_month]),
