@@ -360,4 +360,4 @@ test() ->
 	},		
 	
 	%%KICK SIMULATION!
-	sim:start(SimConfiguration).	
+	sim:start(SimConfiguration,[Firm1, Firm2, Firm3, Firm4], [Household1, Household2, Household3, Household4]).	

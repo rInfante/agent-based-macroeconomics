@@ -2,7 +2,7 @@
 -behavior(gen_fsm).
 
 % public API
--export([start/8, start_link/8, daily_step/2, first_day_of_month/2, last_day_of_month/2]).
+-export([start/1, start_link/1, daily_step/2, first_day_of_month/2, last_day_of_month/2]).
 
 %debug
 -export([firm_id_to_str/1, firm_id_to_atom/1]).
@@ -16,10 +16,10 @@ normal/2]).
 -include_lib("record_defs.hrl").	
 
 %%% PUBLIC API
-start(FirmId, Inventory, Liquidity, WageRate, Price, NumWorkPositionsAvailable, EmployeeIds, SimConfiguration) ->		
-	gen_fsm:start({local, firm_id_to_atom(FirmId)}, ?MODULE, {FirmId, Inventory, Liquidity, WageRate, Price, NumWorkPositionsAvailable, EmployeeIds, SimConfiguration}, []).
-start_link(FirmId, Inventory, Liquidity, WageRate, Price, NumWorkPositionsAvailable, EmployeeIds, SimConfiguration ) ->
-	gen_fsm:start_link({local, firm_id_to_atom(FirmId)}, ?MODULE, {FirmId, Inventory, Liquidity, WageRate, Price, NumWorkPositionsAvailable, EmployeeIds, SimConfiguration}, []).
+start(FirmState) ->		
+	gen_fsm:start({local, firm_id_to_atom(FirmState#firm_state.firm_id)}, ?MODULE, FirmState, []).
+start_link(FirmState ) ->
+	gen_fsm:start_link({local, firm_id_to_atom(FirmState#firm_state.firm_id)}, ?MODULE, FirmState, []).
 
 %%FSM PUBLIC API FUNCTIONS
 daily_step(FirmId, DayNumber) ->
@@ -37,9 +37,9 @@ increase_inventory(FirmId) ->
 	gen_fsm:send_event(firm_id_to_atom(FirmId), increase_inventory).
 
 %GEN_FSM CALLBACKS
-init({FirmId, Inventory, Liquidity, WageRate, Price, NumWorkPositionsAvailable, EmployeeIds, SimConfiguration}) ->
-	io:format("FIRM_FSM initialising state with Id:~w, Inventory:~w, Liquidity:~w, WageRate: ~w, Price: ~w, Number of Labourers:~w, , EmployeeIds: ~w~n",[FirmId, Inventory, Liquidity, WageRate, Price, NumWorkPositionsAvailable, EmployeeIds]),
-	{ok, normal, #firm_state{firm_id=FirmId, inventory_f=Inventory, liquidity_f=Liquidity, wage_rate_f=WageRate, price_f=Price, num_work_positions_available=NumWorkPositionsAvailable, employee_ids= EmployeeIds, sim_configuration = SimConfiguration}, 2000}.
+init(State) ->
+	io:format("FIRM_FSM initialising state with Id:~w, Inventory:~w, Liquidity:~w, WageRate: ~w, Price: ~w, Number of Labourers:~w, , EmployeeIds: ~w~n",[State#firm_state.firm_id, State#firm_state.inventory_f, State#firm_state.liquidity_f, State#firm_state.wage_rate_f, State#firm_state.price_f, State#firm_state.num_work_positions_available, State#firm_state.employee_ids]),
+	{ok, normal, State, 2000}.
 
 normal(Event, State) ->
 	io:format("Firm ~s state is NORMAL. Inventory:~w, Liquidity:~w, WageRate:~w, Price:~w, Number of Labourers:~w, Employee Ids:~w~n",[State#firm_state.firm_id, State#firm_state.inventory_f, State#firm_state.liquidity_f, State#firm_state.wage_rate_f, State#firm_state.price_f, State#firm_state.num_work_positions_available, State#firm_state.employee_ids]),

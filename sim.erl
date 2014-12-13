@@ -2,7 +2,7 @@
 -behavior(gen_fsm).
 
 % public API
--export([start/1, start_link/1, new_step/1]).
+-export([start/3, start_link/3, new_step/1]).
 
 %% gen_fsm callbacks
 -export([init/1,
@@ -13,18 +13,14 @@ normal/2]).
 -include_lib("record_defs.hrl").
 
 %%% PUBLIC API
-start(SimConfiguration) ->	
-	household:start("HH1",1000, 2000, 200, 1, {1,2,3,4,5,6,7}, SimConfiguration),
-	household:start("HH2",1500, 2500, 250, 2, {2,3,4,5,6,7,8}, SimConfiguration),
-	firm:start("FI1",10000,100000, 1500, 50, 20, 3,SimConfiguration),
-	firm:start("FI2",12000,120000, 1700, 70, 30, 3,SimConfiguration),
+start(SimConfiguration, Firms, Households) ->	
+	lists:foreach(fun(F)-> firm:start(F) end, Firms),
+	lists:foreach(fun(H)-> household:start(H) end, Households),
 	gen_fsm:start({local, sim}, ?MODULE, {SimConfiguration}, []).
 	
-start_link(SimConfiguration) ->	  
-	household:start_link("HH1",1000, 2000, 200, 1, {1,2,3,4,5,6,7}, SimConfiguration),
-	household:start_link("HH2",1500, 2500, 250, 1, {1,2,3,4,5,6,7}, SimConfiguration),
-	firm:start_link("FI1",10000,100000, 1500, 50, 20, 3,SimConfiguration),
-	firm:start_link("FI2",12000,120000, 1700, 70, 30, 3,SimConfiguration),
+start_link(SimConfiguration, Firms, Households) ->	  
+	lists:foreach(fun(F)-> firm:start(F) end, Firms),
+	lists:foreach(fun(H)-> household:start(H) end, Households),
 	gen_fsm:start_link({local, sim}, ?MODULE, {SimConfiguration}, []).
 
 %%FSM PUBLIC API FUNCTIONS

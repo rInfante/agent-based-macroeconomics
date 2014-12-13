@@ -2,7 +2,7 @@
 -behavior(gen_fsm).
 
 % public API
--export([start/7, start_link/7, daily_step/2, first_day_of_month/2, last_day_of_month/2]).
+-export([start/1, start_link/1, daily_step/2, first_day_of_month/2, last_day_of_month/2]).
 
 %% gen_fsm callbacks
 -export([init/1,
@@ -13,10 +13,10 @@ normal/2]).
 -include_lib("record_defs.hrl").
 
 %%% PUBLIC API
-start(HouseholdId, ReservationWageRate, Liquidity, PlannedMonthlyConsumptionExpenditure, ProviderFirmsIds, EmployerFirmId, SimConfiguration) ->
-	gen_fsm:start({local, list_to_atom(HouseholdId)}, ?MODULE, {HouseholdId, ReservationWageRate, Liquidity, PlannedMonthlyConsumptionExpenditure, ProviderFirmsIds, EmployerFirmId, SimConfiguration}, []).
-start_link(HouseholdId, ReservationWageRate, Liquidity, PlannedMonthlyConsumptionExpenditure, ProviderFirmsIds, EmployerFirmId, SimConfiguration) ->
-	gen_fsm:start_link({local, list_to_atom(HouseholdId)}, ?MODULE, {HouseholdId, ReservationWageRate, Liquidity, PlannedMonthlyConsumptionExpenditure, ProviderFirmsIds, EmployerFirmId, SimConfiguration}, []).
+start(HouseholdState) ->
+	gen_fsm:start({local, household_id_to_atom(HouseholdState#household_state.household_id)}, ?MODULE, HouseholdState, []).
+start_link(HouseholdState) ->
+	gen_fsm:start_link({local, household_id_to_atom(HouseholdState#household_state.household_id)}, ?MODULE, HouseholdState, []).
 
 %%FSM PUBLIC API FUNCTIONS
 daily_step(HouseholdId, DayNumber) ->
@@ -38,9 +38,9 @@ payrise(HouseholdId, NewWage) ->
 	gen_fsm:send_event(household_id_to_atom(HouseholdId), {payrise,NewWage}).
 
 %GEN_FSM CALLBACKS
-init({HouseholdId, ReservationWageRate, Liquidity, PlannedMonthlyConsumptionExpenditure, ProviderFirmsIds, EmployerFirmId, SimConfiguration}) ->
-	io:format("HOUSEHOLD_FSM initialising household_state with Id:~w, ReservationWageRate:~w, Liquidity:~w, Monthly Demand: ~w, Type A Company Ids: ~w, Type B Company Id: ~w~n",[HouseholdId, ReservationWageRate, Liquidity, PlannedMonthlyConsumptionExpenditure, ProviderFirmsIds, EmployerFirmId]),
-	{ok, normal, #household_state{household_id=HouseholdId, reservation_wage_rate_h=ReservationWageRate, liquidity_h=Liquidity, planned_monthly_consumption_expenditure=PlannedMonthlyConsumptionExpenditure, provider_firms_ids=ProviderFirmsIds, employer_firm_id=EmployerFirmId, sim_configuration=SimConfiguration}, 2000}.
+init(State) ->
+	io:format("HOUSEHOLD_FSM initialising household_state with Id:~w, ReservationWageRate:~w, Liquidity:~w, Monthly Demand~w~n",[State#household_state.household_id, State#household_state.reservation_wage_rate_h, State#household_state.liquidity_h, State#household_state.planned_monthly_consumption_expenditure]),
+	{ok, normal, State, 2000}.
 
 normal(Event, State) ->
 	io:format("Household id:~w household_state is NORMAL.  ReservationWageRate:~w, Liquidity:~w, Monthly Demand: ~w~n",[State#household_state.household_id, State#household_state.reservation_wage_rate_h, State#household_state.liquidity_h, State#household_state.planned_monthly_consumption_expenditure]),
