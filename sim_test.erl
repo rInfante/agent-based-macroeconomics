@@ -25,10 +25,11 @@ test() ->
 		max_number_provider_firms_visited=7,
 		technology_productivity_parameter=3.0,%lambda
 		claimed_wage_rate_percentage_reduction_if_unemployed=0.10,
-		
-		firm_ids=[{1, [1,5]}, {2, [2,6]}, {3,[3,7]}, {4,[4,8]}, {5, [9,13]}, {6, [10,14]}, {7,[11,15]}, {8,[12,16]}],%%TODO: to think whether one firm_id tuple list or both list and map
-		household_ids=[1, 2, 3, 4, 5, 6, 7, 8]
+
+		firm_ids=[{1, [1,5]}, {2, [2,6]}, {3,[3,7]}, {4,[4,8]}, {5,[9,13]}, {6,[10,14]}, {7,[11,15]}, {8,[12,16]}],
+		household_ids=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
     },
+	
 	Firm1 = #firm_state
 	{
 		firm_id=1, 
@@ -332,7 +333,7 @@ test() ->
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
 		provider_firms_ids=[2,3,4,5], %type A firms
-		employer_firm_id=6, % type B firm
+		employer_firm_id=5, % type B firm
 		
 		sim_configuration=SimConfiguration		
 	},
@@ -360,4 +361,9 @@ test() ->
 	},		
 	
 	%%KICK SIMULATION!
-	sim:start(SimConfiguration,[Firm1, Firm2, Firm3, Firm4], [Household1, Household2, Household3, Household4]).	
+	sim:start(SimConfiguration,
+		[Firm1, Firm2, Firm3, Firm4, Firm5, Firm6, Firm7, Firm8], 
+		[Household1, Household2, Household3, Household4,
+			Household5, Household6, Household7, Household8,
+			Household9, Household10, Household11, Household12,
+			Household13, Household14, Household15, Household16]).	

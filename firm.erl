@@ -42,7 +42,7 @@ init(State) ->
 	{ok, normal, State, 2000}.
 
 normal(Event, State) ->
-	io:format("Firm ~s state is NORMAL. Inventory:~w, Liquidity:~w, WageRate:~w, Price:~w, Number of Labourers:~w, Employee Ids:~w~n",[State#firm_state.firm_id, State#firm_state.inventory_f, State#firm_state.liquidity_f, State#firm_state.wage_rate_f, State#firm_state.price_f, State#firm_state.num_work_positions_available, State#firm_state.employee_ids]),
+	io:format("Firm ~w state is NORMAL. Inventory:~w, Liquidity:~w, WageRate:~w, Price:~w, Number of Labourers:~w, Employee Ids:~w~n",[State#firm_state.firm_id, State#firm_state.inventory_f, State#firm_state.liquidity_f, State#firm_state.wage_rate_f, State#firm_state.price_f, State#firm_state.num_work_positions_available, State#firm_state.employee_ids]),
 	case Event of
 		increase_inventory ->
 			NewInventory = State#firm_state.inventory_f + State#firm_state.num_work_positions_available * State#firm_state.sim_configuration#sim_config.technology_productivity_parameter,

@@ -34,7 +34,7 @@ init(SimConfiguration) ->
 	{ok, normal, SimConfiguration, 0}.
 
 normal(Event, State) ->
-	io:format("Simulator sim_config is NORMAL. DaysInOneMonth: ~w~n",[State#sim_config.days_in_one_month]),
+	io:format("State = ~w~n", [State]),	
 	case Event of
 		{new_step, StepNumber} ->
 			io:format("New simulation step: ~w~n",[StepNumber]),
