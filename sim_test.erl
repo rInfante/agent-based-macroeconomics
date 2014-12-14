@@ -218,7 +218,7 @@ test() ->
 	},
 	Household4=#household_state 
 	{
-		household_id=1, 
+		household_id=4, 
 		reservation_wage_rate_h=800, %w_h
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
@@ -229,7 +229,7 @@ test() ->
 	},
 	Household5=#household_state 
 	{
-		household_id=1, 
+		household_id=5, 
 		reservation_wage_rate_h=800, %w_h
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
@@ -240,7 +240,7 @@ test() ->
 	},
 	Household6=#household_state 
 	{
-		household_id=2, 
+		household_id=6, 
 		reservation_wage_rate_h=800, %w_h
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
@@ -251,7 +251,7 @@ test() ->
 	},
 	Household7=#household_state 
 	{
-		household_id=3, 
+		household_id=7, 
 		reservation_wage_rate_h=800, %w_h
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
@@ -262,7 +262,7 @@ test() ->
 	},
 	Household8=#household_state 
 	{
-		household_id=1, 
+		household_id=8, 
 		reservation_wage_rate_h=800, %w_h
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
@@ -273,7 +273,7 @@ test() ->
 	},	
 	Household9=#household_state 
 	{
-		household_id=1, 
+		household_id=9, 
 		reservation_wage_rate_h=800, %w_h
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
@@ -284,7 +284,7 @@ test() ->
 	},
 	Household10=#household_state 
 	{
-		household_id=2, 
+		household_id=10, 
 		reservation_wage_rate_h=800, %w_h
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
@@ -295,7 +295,7 @@ test() ->
 	},
 	Household11=#household_state 
 	{
-		household_id=3, 
+		household_id=11, 
 		reservation_wage_rate_h=800, %w_h
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
@@ -306,7 +306,7 @@ test() ->
 	},
 	Household12=#household_state 
 	{
-		household_id=1, 
+		household_id=12, 
 		reservation_wage_rate_h=800, %w_h
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
@@ -317,7 +317,7 @@ test() ->
 	},
 	Household13=#household_state 
 	{
-		household_id=1, 
+		household_id=13, 
 		reservation_wage_rate_h=800, %w_h
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
@@ -328,7 +328,7 @@ test() ->
 	},
 	Household14=#household_state 
 	{
-		household_id=2, 
+		household_id=14, 
 		reservation_wage_rate_h=800, %w_h
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
@@ -339,7 +339,7 @@ test() ->
 	},
 	Household15=#household_state 
 	{
-		household_id=3, 
+		household_id=15, 
 		reservation_wage_rate_h=800, %w_h
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
@@ -350,7 +350,7 @@ test() ->
 	},
 	Household16=#household_state 
 	{
-		household_id=1, 
+		household_id=16, 
 		reservation_wage_rate_h=800, %w_h
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
