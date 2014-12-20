@@ -19,7 +19,7 @@
 		technology_productivity_parameter,%lambda
 		claimed_wage_rate_percentage_reduction_if_unemployed,
 		
-		firm_ids,
+		firm_employees_lookup,
 		household_ids
     }).	
 	

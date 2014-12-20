@@ -3,9 +3,9 @@
 -export(
 		[
 			choose_weighted_random_item/1,
-			choose_random_item/1,
-			filter_out_second_list_from_first_list/2, 
-			replace_item_in_list/3
+			choose_random_item/1,			
+			replace_item_in_list/3,
+			list_of_key_list_pairs_to_list_of_key_length_pairs/1
 		]
 		).
 %%test
@@ -59,10 +59,6 @@ choose_random_item(ItemList) ->
 	Item = choose_weighted_random_item(ItemQuantityTupleList),
 	Item.
 
-%TODO:probably this function is redundant because already provided by lists library	
-filter_out_second_list_from_first_list(FirstList, SecondList) ->
-	lists:subtract(FirstList, SecondList).
-	
 replace_item_in_list(List, CurrentItem, NewItem) ->
 	lists:map(fun(X)->
 					if
@@ -72,3 +68,8 @@ replace_item_in_list(List, CurrentItem, NewItem) ->
 							X
 					end
 					end, List).
+
+%%KeyListPairs = similar to:[{1, [1,5]}, {2, [2,6]}, {3,[3,7]}, {4,[4,8]}, {5,[9,13]}, {6,[10,14]}, {7,[11,15]}, {8,[12,16]}]
+%%Returns a {Key, Quantity} tuple list (aka ItemQuantityTupleList)
+list_of_key_list_pairs_to_list_of_key_length_pairs(KeyListPairs) ->
+	lists:map(fun({Key, List}) -> {Key, length(List)} end, KeyListPairs).

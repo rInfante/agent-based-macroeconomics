@@ -26,7 +26,7 @@ test() ->
 		technology_productivity_parameter=3.0,%lambda
 		claimed_wage_rate_percentage_reduction_if_unemployed=0.10,
 
-		firm_ids=[{1, [1,5]}, {2, [2,6]}, {3,[3,7]}, {4,[4,8]}, {5,[9,13]}, {6,[10,14]}, {7,[11,15]}, {8,[12,16]}],
+		firm_employees_lookup=[{1, [1,5]}, {2, [2,6]}, {3,[3,7]}, {4,[4,8]}, {5,[9,13]}, {6,[10,14]}, {7,[11,15]}, {8,[12,16]}],
 		household_ids=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
     },
 	
@@ -45,7 +45,7 @@ test() ->
 		fired_employee_id=0,
 		monthly_demand_of_consumption_goods=0,
 		monthly_marginal_costs=0,		
-		employee_ids=[1,2],
+		employee_ids=[1,5],
 		
 		sim_configuration=SimConfiguration
 	},
@@ -64,7 +64,7 @@ test() ->
 		fired_employee_id=0,
 		monthly_demand_of_consumption_goods=0,
 		monthly_marginal_costs=0,		
-		employee_ids=[1,2],
+		employee_ids=[2,6],
 		
 		sim_configuration=SimConfiguration
 	},	
@@ -83,7 +83,7 @@ test() ->
 		fired_employee_id=0,
 		monthly_demand_of_consumption_goods=0,
 		monthly_marginal_costs=0,		
-		employee_ids=[1,2],
+		employee_ids=[3,7],
 		
 		sim_configuration=SimConfiguration
 	},
@@ -102,7 +102,7 @@ test() ->
 		fired_employee_id=0,
 		monthly_demand_of_consumption_goods=0,
 		monthly_marginal_costs=0,		
-		employee_ids=[1,2],
+		employee_ids=[4,8],
 		
 		sim_configuration=SimConfiguration
 	},
@@ -121,7 +121,7 @@ test() ->
 		fired_employee_id=0,
 		monthly_demand_of_consumption_goods=0,
 		monthly_marginal_costs=0,		
-		employee_ids=[1,2],
+		employee_ids=[9,13],
 		
 		sim_configuration=SimConfiguration
 	},	
@@ -140,7 +140,7 @@ test() ->
 		fired_employee_id=0,
 		monthly_demand_of_consumption_goods=0,
 		monthly_marginal_costs=0,		
-		employee_ids=[1,2],
+		employee_ids=[10,14],
 		
 		sim_configuration=SimConfiguration
 	},	
@@ -159,7 +159,7 @@ test() ->
 		fired_employee_id=0,
 		monthly_demand_of_consumption_goods=0,
 		monthly_marginal_costs=0,		
-		employee_ids=[1,2],
+		employee_ids=[11,15],
 		
 		sim_configuration=SimConfiguration
 	},	
@@ -178,7 +178,7 @@ test() ->
 		fired_employee_id=0,
 		monthly_demand_of_consumption_goods=0,
 		monthly_marginal_costs=0,		
-		employee_ids=[1,2],
+		employee_ids=[12,16],
 		
 		sim_configuration=SimConfiguration
 	},

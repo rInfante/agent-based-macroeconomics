@@ -10,8 +10,8 @@
 %% gen_fsm callbacks
 -export([init/1,
 handle_event/3, handle_sync_event/4, handle_info/3,terminate/3, code_change/4,
- %cusatom state names
-normal/2]).
+ %custom state names
+normal/2, normal/3]).
 
 -include_lib("record_defs.hrl").	
 
@@ -55,8 +55,33 @@ normal(Event, State) ->
 			io:format("Unknown event. Staying NORMAL.~n"),
 			{next_state, normal, State, 2000}
 	end.
+normal(Event, From, State) ->
+	io:format("An event has been sent from: ~w to Firm Id: ~w~n",[From, State#firm_state.firm_id]),
+	case Event of
+		get_price ->			
+			Price = State#firm_state.price_f,
+			io:format("Firm id:~w has received a get price request. Price: ~w~n",[State#firm_state.firm_id, State#firm_state.price_f]),			
+			{reply, Price, normal, State};
+		get_work_properties ->
+			WorkProperties = {
+								State#firm_state.work_position_has_been_offered,
+								State#firm_state.work_position_has_been_accepted,
+								State#firm_state.wage_rate_f
+ 							},
+			io:format("Firm id:~w has received a get work properties request. Position Offered: ~w; Position Accepted: ~w; Wage Rate: ~w~n",
+								[State#firm_state.firm_id, State#firm_state.work_position_has_been_offered,
+								State#firm_state.work_position_has_been_accepted,
+								State#firm_state.wage_rate_f]),			
+			{reply, WorkProperties, normal, State};
+		timeout ->
+			io:format("Nothing has happened to NORMAL firm id:~w...~n",[State#firm_state.firm_id]),
+			{next_state, normal, State, 10000};
+		_ ->
+			io:format("Unknown event. Staying NORMAL.~n"),
+			{next_state, normal, State, 2000}
+	end.	
 
-
+%%GEN FSM BEHAVIOUR TEMPLATE
 handle_event(Event, StateName, State) ->
 	io:format("Handling event:~w; StateName:~w, State:~w~n",[Event, StateName, State]),
     {next_state, StateName, State}.

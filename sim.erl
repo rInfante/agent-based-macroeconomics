@@ -2,7 +2,7 @@
 -behavior(gen_fsm).
 
 % public API
--export([start/3, start_link/3, new_step/1]).
+-export([start/3, start_link/3, new_step/1, get_firm_ids_from_lookup/1]).
 
 %% gen_fsm callbacks
 -export([init/1,
@@ -16,12 +16,12 @@ normal/2]).
 start(SimConfiguration, Firms, Households) ->	
 	lists:foreach(fun(F)-> firm:start(F) end, Firms),
 	lists:foreach(fun(H)-> household:start(H) end, Households),
-	gen_fsm:start({local, sim}, ?MODULE, {SimConfiguration}, []).
+	gen_fsm:start({local, sim}, ?MODULE, SimConfiguration, []).
 	
 start_link(SimConfiguration, Firms, Households) ->	  
 	lists:foreach(fun(F)-> firm:start(F) end, Firms),
 	lists:foreach(fun(H)-> household:start(H) end, Households),
-	gen_fsm:start_link({local, sim}, ?MODULE, {SimConfiguration}, []).
+	gen_fsm:start_link({local, sim}, ?MODULE, SimConfiguration, []).
 
 %%FSM PUBLIC API FUNCTIONS
 new_step(StepNumber) ->
@@ -39,25 +39,25 @@ normal(Event, State) ->
 		{new_step, StepNumber} ->
 			io:format("New simulation step: ~w~n",[StepNumber]),
 			if 
-				StepNumber rem State#sim_config.days_in_one_month == 1.0 ->
+				(StepNumber rem State#sim_config.days_in_one_month == 1.0) ->
 					MonthNumber= 1 + trunc(StepNumber / State#sim_config.days_in_one_month),
-					io:format("This step is the first day of the month. Month number: ~w~n",[MonthNumber]),						
-					household:first_day_of_month(MonthNumber),%also inject Sim_State
-					firm:first_day_of_month(MonthNumber);%also inject Sim_State
+					io:format("This step is the first day of the month. Month number: ~w~n",[MonthNumber]),	
+					lists:foreach(fun(Id)->household:first_day_of_month(Id, MonthNumber) end, State#sim_config.household_ids), %also inject Sim_State
+					lists:foreach(fun(Id)->firm:first_day_of_month(Id, MonthNumber) end, get_firm_ids_from_lookup(State#sim_config.firm_employees_lookup)); %also inject Sim_State					
 				true ->
 					io:format("This step is NOT the first day of the month.~n",[])
 			end,
 			if 
-				StepNumber rem State#sim_config.days_in_one_month == 0.0 ->
+				(StepNumber rem State#sim_config.days_in_one_month == 0.0) ->
 					MonthNumber1= StepNumber / State#sim_config.days_in_one_month,
-					io:format("This step is the last day of the month. Month number: ~w~n",[MonthNumber1]),					
-					household_:last_day_of_month(MonthNumber1),%also inject Sim_State
-					firm:last_day_of_month(MonthNumber1);%also inject Sim_State
+					io:format("This step is the last day of the month. Month number: ~w~n",[MonthNumber1]),		
+					lists:foreach(fun(Id)->household:last_day_of_month(Id, MonthNumber1) end, State#sim_config.household_ids), %also inject Sim_State
+					lists:foreach(fun(Id)->firm:last_day_of_month(Id, MonthNumber1) end, get_firm_ids_from_lookup(State#sim_config.firm_employees_lookup)); %also inject Sim_State							
 				true ->
 					io:format("This step is NOT the last day of the month.~n",[])
-			end,			
-			household:daily_step(StepNumber),%also inject Sim_State
-			firm:daily_step(StepNumber),%also inject Sim_State
+			end,
+			lists:foreach(fun(Id)->household:daily_step(Id, StepNumber) end, State#sim_config.household_ids), %also inject Sim_State
+			lists:foreach(fun(Id)->firm:daily_step(Id, StepNumber) end, get_firm_ids_from_lookup(State#sim_config.firm_employees_lookup)), %also inject Sim_State
 			%TODO:here query all firms and households to regenerate household and firm tuple list containing all firm-household relationships
 			%then inject these into Sim state (sim_configuration record)
 			{next_state, normal, State, 10000};
@@ -69,6 +69,7 @@ normal(Event, State) ->
 			{next_state, normal, State, 1000}
 	end.
 
+%%GEN FSM BEHAVIOUR TEMPLATE
 handle_event(Event, StateName, State) ->
 	io:format("Handling event:~w; StateName:~w, State:~w",[Event, StateName, State]),
     {next_state, StateName, State}.
@@ -81,3 +82,9 @@ terminate(_Reason, _StateName, _State) ->
     ok.
 code_change(_OldVsn, StateName, State, _Extra) ->
     {ok, StateName, State}.
+	
+%PRIVATE
+%FirmToEmployeesLookup = [{1, [11,12]}, {2, [21, 22, 23]}, {3, [31, 32]} , ...
+%return id list: [1, 2, 3, 4, ...
+get_firm_ids_from_lookup(FirmToEmployeesLookup)->
+	lists:map(fun({FirmId, _EmployeeIds}) ->FirmId end, FirmToEmployeesLookup).

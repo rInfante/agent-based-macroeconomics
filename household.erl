@@ -50,8 +50,9 @@ normal(Event, State) ->
 			{next_state, normal, #household_state{reservation_wage_rate_h=NewWage}, 1000};
 		spend ->
 			Expenditure = State#household_state.planned_monthly_consumption_expenditure/State#household_state.sim_configuration#sim_config.days_in_one_month,
-			io:format("Household ~w is spending ~w~n",[State#household_state.household_id, Expenditure]),			
-			{next_state, normal, #household_state{liquidity_h=State#household_state.liquidity_h-Expenditure}, 10000};
+			NewLiquidity = State#household_state.liquidity_h-Expenditure,
+			io:format("Household ~w is spending ~w; Liquidity gone from: ~w to: ~w~n",[State#household_state.household_id, Expenditure, State#household_state.liquidity_h, NewLiquidity]),			
+			{next_state, normal, State#household_state{liquidity_h=NewLiquidity}, 10000};
 		timeout ->
 			io:format("Nothing has happened to NORMAL household id:~w...~n",[State#household_state.household_id]),
 			{next_state, normal, State, 10000};
@@ -61,6 +62,7 @@ normal(Event, State) ->
 	end.
 
 
+%%GEN FSM BEHAVIOUR TEMPLATE
 handle_event(Event, StateName, State) ->
 	io:format("Handling event:~w; StateName:~w, State:~w~n",[Event, StateName, State]),
     {next_state, StateName, State}.
