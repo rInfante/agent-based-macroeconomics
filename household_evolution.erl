@@ -10,7 +10,11 @@
 			evolve_provider_firm_ids/1,
 			try_set_new_employer_firm/2,
 			evolve_employer_firm_id/1,
-			evolve_planned_monthly_consumption_expenditure/1
+			evolve_planned_monthly_consumption_expenditure/1,
+			try_to_transact_with_provider_firms/1,
+			evolve_liquidity_daily/1,
+			evolve_liquidity_from_salary/1,
+			evolve_claimed_wage_rate/1
 		]
  ).
  
@@ -111,12 +115,75 @@ evolve_planned_monthly_consumption_expenditure(HouseholdState) ->
 	LiquidityRatio = HouseholdState#household_state.liquidity_h / AverageGoodsPriceOfProviderFirms,
 	min(math:pow(LiquidityRatio, SimConfiguration#sim_config.planned_consumption_increase_decaying_rate), LiquidityRatio).
 	
+try_to_transact_with_provider_firms(HouseholdState) ->
+	SimConfiguration = HouseholdState#household_state.sim_configuration,
+	PlannedDailyConsumptionDemand = HouseholdState#household_state.planned_monthly_consumption_expenditure / SimConfiguration#sim_config.days_in_one_month,
+	MaxNumAttempts = SimConfiguration#sim_config.max_number_provider_firms_visited,
+	transact_with_provider_firm(1, MaxNumAttempts, PlannedDailyConsumptionDemand, HouseholdState#household_state.liquidity_h, HouseholdState).
+	
+transact_with_provider_firm(AttemptCycle, MaxNumAttempts, PlannedDailyConsumptionDemand, CurrentHouseholdAgentLiquidity, HouseholdState) ->
+	ChosenProviderFirmId = choose_random_provider_firm_id(HouseholdState),
+	ChosenProviderFirmInventory =  firm_get_inventory(ChosenProviderFirmId),
+	ChosenProviderFirmPrice = firm_get_price(ChosenProviderFirmId),
+	case (ChosenProviderFirmInventory > PlannedDailyConsumptionDemand)
+		  and (CurrentHouseholdAgentLiquidity >= ChosenProviderFirmPrice * PlannedDailyConsumptionDemand) of
+		true ->
+			%%TODO: send message to chosenProviderFirm to raise its liquidity by chosenProviderFirm.Price * plannedDailyConsumptionDemand and decrease inventory by plannedDailyConsumptionDemand
+			CurrentHouseholdAgentLiquidity - ChosenProviderFirmPrice * PlannedDailyConsumptionDemand;
+		false ->
+			case (CurrentHouseholdAgentLiquidity < ChosenProviderFirmPrice * PlannedDailyConsumptionDemand) of
+				true ->
+					AdjustedDailyConsumptionDemand = CurrentHouseholdAgentLiquidity / ChosenProviderFirmPrice,
+					%%TODO: send message to chosenProviderFirm to raise its liquidity by chosenProviderFirm.Price * adjustedDailyConsumptionDemand and decrease inventory by adjustedDailyConsumptionDemand
+					CurrentHouseholdAgentLiquidity - ChosenProviderFirmPrice * AdjustedDailyConsumptionDemand; %%the result should be 0.0
+				false ->
+					AdjustedDailyConsumptionDemand = ChosenProviderFirmInventory,
+					%%TODO: send message to chosenProviderFirm to raise its liquidity by ChosenProviderFirmInventory * CurrentHouseholdAgentLiquidity and decrease inventory by chosenProviderFirm.Inventory (inventory should go down to 0)
+					AmendedHouseholdAgentLiquidity = CurrentHouseholdAgentLiquidity - ChosenProviderFirmInventory * AdjustedDailyConsumptionDemand,
+					case (AttemptCycle < MaxNumAttempts) of %%TODO add condition of CurrentHouseholdAgentLiquidity > 5% of agent.Liquidity							
+						true-> 
+							transact_with_provider_firm(AttemptCycle+1, MaxNumAttempts, PlannedDailyConsumptionDemand, AmendedHouseholdAgentLiquidity, HouseholdState);
+						false ->
+							AmendedHouseholdAgentLiquidity
+					end
+			end
+	end.
+
+evolve_liquidity_daily(HouseholdState) ->
+    try_to_transact_with_provider_firms(HouseholdState).
+	
+evolve_liquidity_from_salary(HouseholdState) ->
+    %%TODO: Employer of household to pay salary and reduice its liquidity: replace line below with single method whihc reduces firm liquidity and returns WageRate
+	EmployerFirmId = HouseholdState#household_state.employer_firm_id,
+	[_, _, WageRate] = firm_get_work_properties(EmployerFirmId),	
+    HouseholdState#household_state.liquidity_h + WageRate.
+
+evolve_claimed_wage_rate(HouseholdState) ->
+	SimConfiguration = HouseholdState#household_state.sim_configuration,
+	EmployerFirmId = HouseholdState#household_state.employer_firm_id,
+	[_, _, WageRate] = firm_get_work_properties(EmployerFirmId),
+	case (EmployerFirmId == 0) of
+		true -> %%unemployed
+			(1.0 - SimConfiguration#sim_config.claimed_wage_rate_percentage_reduction_if_unemployed) * HouseholdState#household_state.reservation_wage_rate_h;
+		false -> %%employed
+			case (WageRate > HouseholdState#household_state.reservation_wage_rate_h) of
+				true ->
+					WageRate;
+				false ->
+					HouseholdState#household_state.reservation_wage_rate_h
+			end
+	end.
+	
 %%PRIVATE	
 %%communication other agents
 %%TODO: possibly move to other module?
+%%TODO: possibly get from firm a household state record rather than separate properties??
 
 firm_get_price(FirmId) ->
 	gen_fsm:sync_send_event(FirmId, get_price).
+	
+firm_get_inventory(FirmId) ->
+	gen_fsm:sync_send_event(FirmId, get_inventory).
 	
 firm_get_work_properties(FirmId) ->
 	gen_fsm:sync_send_event(FirmId, get_work_properties).

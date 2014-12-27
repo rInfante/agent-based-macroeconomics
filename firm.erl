@@ -62,6 +62,10 @@ normal(Event, From, State) ->
 			Price = State#firm_state.price_f,
 			io:format("Firm id:~w has received a get price request. Price: ~w~n",[State#firm_state.firm_id, State#firm_state.price_f]),			
 			{reply, Price, normal, State};
+		get_inventory ->			
+			Inventory = State#firm_state.inventory_f,
+			io:format("Firm id:~w has received a get inventory request. Price: ~w~n",[State#firm_state.firm_id, State#firm_state.inventory_f]),			
+			{reply, Price, normal, State};			
 		get_work_properties ->
 			WorkProperties = {
 								State#firm_state.work_position_has_been_offered,
