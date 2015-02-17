@@ -10,6 +10,9 @@
 
 -include_lib("record_defs.hrl").
 
+% ---------------------
+% FIRST DAY OF THE MONTH
+% ---------------------
 evolve_num_consecutive_months_with_all_positions_filled (FirmState) ->
      if 
 		FirmState#firm_state.num_work_positions_filled == FirmState#firm_state.num_work_positions_available ->

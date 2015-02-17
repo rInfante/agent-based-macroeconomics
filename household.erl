@@ -22,12 +22,10 @@ start_link(HouseholdState) ->
 daily_step(HouseholdId, DayNumber) ->
 	io:format("Processing day ~w for household id: ~w~n",[DayNumber, HouseholdId]),
 	spend(HouseholdId).
-
 first_day_of_month(HouseholdId, MonthNumber) ->
 	io:format("Processing first day of month: ~w for household id: ~w~n",[MonthNumber, HouseholdId]).
 last_day_of_month(HouseholdId, MonthNumber) ->
 	io:format("Processing last day of month: ~w for household id: ~w~n",[MonthNumber, HouseholdId]).
-
 
 %Private functions
 spend(HouseholdId) ->
