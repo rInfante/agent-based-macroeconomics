@@ -5,7 +5,7 @@
 -include_lib("record_defs.hrl").
 
 test() ->
-	SimConfiguration = #sim_config
+	SimConfiguration = #sim_state
 	{
 		days_in_one_month=21,
 		num_household_to_firm_trading_relations=7,
@@ -45,9 +45,7 @@ test() ->
 		fired_employee_id=0,
 		monthly_demand_of_consumption_goods=0,
 		monthly_marginal_costs=0,		
-		employee_ids=[1,5],
-		
-		sim_configuration=SimConfiguration
+		employee_ids=[1,5]
 	},
 	Firm2 = #firm_state
 	{
@@ -64,9 +62,7 @@ test() ->
 		fired_employee_id=0,
 		monthly_demand_of_consumption_goods=0,
 		monthly_marginal_costs=0,		
-		employee_ids=[2,6],
-		
-		sim_configuration=SimConfiguration
+		employee_ids=[2,6]
 	},	
 	Firm3 = #firm_state
 	{
@@ -83,9 +79,7 @@ test() ->
 		fired_employee_id=0,
 		monthly_demand_of_consumption_goods=0,
 		monthly_marginal_costs=0,		
-		employee_ids=[3,7],
-		
-		sim_configuration=SimConfiguration
+		employee_ids=[3,7]
 	},
 	Firm4 = #firm_state
 	{
@@ -102,9 +96,7 @@ test() ->
 		fired_employee_id=0,
 		monthly_demand_of_consumption_goods=0,
 		monthly_marginal_costs=0,		
-		employee_ids=[4,8],
-		
-		sim_configuration=SimConfiguration
+		employee_ids=[4,8]
 	},
 	Firm5 = #firm_state
 	{
@@ -121,9 +113,7 @@ test() ->
 		fired_employee_id=0,
 		monthly_demand_of_consumption_goods=0,
 		monthly_marginal_costs=0,		
-		employee_ids=[9,13],
-		
-		sim_configuration=SimConfiguration
+		employee_ids=[9,13]
 	},	
 	Firm6 = #firm_state
 	{
@@ -140,9 +130,7 @@ test() ->
 		fired_employee_id=0,
 		monthly_demand_of_consumption_goods=0,
 		monthly_marginal_costs=0,		
-		employee_ids=[10,14],
-		
-		sim_configuration=SimConfiguration
+		employee_ids=[10,14]
 	},	
 	Firm7 = #firm_state
 	{
@@ -159,9 +147,7 @@ test() ->
 		fired_employee_id=0,
 		monthly_demand_of_consumption_goods=0,
 		monthly_marginal_costs=0,		
-		employee_ids=[11,15],
-		
-		sim_configuration=SimConfiguration
+		employee_ids=[11,15]
 	},	
 	Firm8 = #firm_state
 	{
@@ -178,9 +164,7 @@ test() ->
 		fired_employee_id=0,
 		monthly_demand_of_consumption_goods=0,
 		monthly_marginal_costs=0,		
-		employee_ids=[12,16],
-		
-		sim_configuration=SimConfiguration
+		employee_ids=[12,16]
 	},
 	
 	Household1=#household_state 
@@ -190,9 +174,7 @@ test() ->
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
 		provider_firms_ids=[1,2,3,4], %type A firms
-		employer_firm_id=1, % type B firm
-		
-		sim_configuration=SimConfiguration		
+		employer_firm_id=1 % type B firm
 	},
 	Household2=#household_state 
 	{
@@ -201,9 +183,7 @@ test() ->
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
 		provider_firms_ids=[2,3,4,5], %type A firms
-		employer_firm_id=2, % type B firm
-		
-		sim_configuration=SimConfiguration		
+		employer_firm_id=2 % type B firm
 	},
 	Household3=#household_state 
 	{
@@ -212,9 +192,7 @@ test() ->
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
 		provider_firms_ids=[3,4,5,6], %type A firms
-		employer_firm_id=3, % type B firm
-		
-		sim_configuration=SimConfiguration		
+		employer_firm_id=3 % type B firm
 	},
 	Household4=#household_state 
 	{
@@ -223,9 +201,7 @@ test() ->
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
 		provider_firms_ids=[5,6,7,8], %type A firms
-		employer_firm_id=4, % type B firm
-		
-		sim_configuration=SimConfiguration		
+		employer_firm_id=4 % type B firm
 	},
 	Household5=#household_state 
 	{
@@ -234,9 +210,7 @@ test() ->
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
 		provider_firms_ids=[1,2,3,4], %type A firms
-		employer_firm_id=1, % type B firm
-		
-		sim_configuration=SimConfiguration		
+		employer_firm_id=1 % type B firm
 	},
 	Household6=#household_state 
 	{
@@ -245,9 +219,7 @@ test() ->
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
 		provider_firms_ids=[2,3,4,5], %type A firms
-		employer_firm_id=2, % type B firm
-		
-		sim_configuration=SimConfiguration		
+		employer_firm_id=2 % type B firm		
 	},
 	Household7=#household_state 
 	{
@@ -256,9 +228,7 @@ test() ->
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
 		provider_firms_ids=[3,4,5,6], %type A firms
-		employer_firm_id=3, % type B firm
-		
-		sim_configuration=SimConfiguration		
+		employer_firm_id=3 % type B firm		
 	},
 	Household8=#household_state 
 	{
@@ -267,9 +237,7 @@ test() ->
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
 		provider_firms_ids=[5,6,7,8], %type A firms
-		employer_firm_id=4, % type B firm
-		
-		sim_configuration=SimConfiguration		
+		employer_firm_id=4 % type B firm	
 	},	
 	Household9=#household_state 
 	{
@@ -278,9 +246,7 @@ test() ->
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
 		provider_firms_ids=[1,2,3,4], %type A firms
-		employer_firm_id=5, % type B firm
-		
-		sim_configuration=SimConfiguration		
+		employer_firm_id=5 % type B firm		
 	},
 	Household10=#household_state 
 	{
@@ -289,9 +255,7 @@ test() ->
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
 		provider_firms_ids=[2,3,4,5], %type A firms
-		employer_firm_id=6, % type B firm
-		
-		sim_configuration=SimConfiguration		
+		employer_firm_id=6 % type B firm	
 	},
 	Household11=#household_state 
 	{
@@ -300,9 +264,7 @@ test() ->
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
 		provider_firms_ids=[3,4,5,6], %type A firms
-		employer_firm_id=7, % type B firm
-		
-		sim_configuration=SimConfiguration		
+		employer_firm_id=7 % type B firm	
 	},
 	Household12=#household_state 
 	{
@@ -311,9 +273,7 @@ test() ->
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
 		provider_firms_ids=[5,6,7,8], %type A firms
-		employer_firm_id=8, % type B firm
-		
-		sim_configuration=SimConfiguration		
+		employer_firm_id=8 % type B firm		
 	},
 	Household13=#household_state 
 	{
@@ -322,9 +282,7 @@ test() ->
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
 		provider_firms_ids=[1,2,3,4], %type A firms
-		employer_firm_id=5, % type B firm
-		
-		sim_configuration=SimConfiguration		
+		employer_firm_id=5 % type B firm		
 	},
 	Household14=#household_state 
 	{
@@ -333,9 +291,7 @@ test() ->
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
 		provider_firms_ids=[2,3,4,5], %type A firms
-		employer_firm_id=5, % type B firm
-		
-		sim_configuration=SimConfiguration		
+		employer_firm_id=5 % type B firm		
 	},
 	Household15=#household_state 
 	{
@@ -344,9 +300,7 @@ test() ->
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
 		provider_firms_ids=[3,4,5,6], %type A firms
-		employer_firm_id=7, % type B firm
-		
-		sim_configuration=SimConfiguration		
+		employer_firm_id=7 % type B firm	
 	},
 	Household16=#household_state 
 	{
@@ -355,9 +309,7 @@ test() ->
 		liquidity_h=5000, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
 		provider_firms_ids=[5,6,7,8], %type A firms
-		employer_firm_id=8, % type B firm
-		
-		sim_configuration=SimConfiguration		
+		employer_firm_id=8 % type B firm		
 	},		
 	
 	%%KICK SIMULATION!

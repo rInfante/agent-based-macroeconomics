@@ -21,7 +21,7 @@
 -include_lib("record_defs.hrl").
 
 select_simulation_firm_agent_ids(#household_state{sim_configuration=SimConfirguration}) ->
-    sim:get_firm_ids_from_lookup(SimConfirguration#sim_config.firm_employees_lookup).
+    sim:get_firm_ids_from_lookup(SimConfirguration#sim_state.firm_employees_lookup).
 
 choose_potential_employer_firm(HouseholdState) ->
     FirmIds = select_simulation_firm_agent_ids(HouseholdState),
@@ -45,7 +45,7 @@ choose_unconnected_firm_id_randomly_weighted_on_employee_count(HouseholdState) -
 	
 evolve_provider_firm_ids(HouseholdState) ->
 	SimConfiguration = HouseholdState#household_state.sim_configuration,
-	IsEventHappening = numerics:is_happening_with_probability(SimConfiguration#sim_config.probability_of_household_picking_new_provider_firm),
+	IsEventHappening = numerics:is_happening_with_probability(SimConfiguration#sim_state.probability_of_household_picking_new_provider_firm),
 	if 
 		IsEventHappening ->
 			ChosenConnectedProviderFirmId = choose_random_provider_firm_id(HouseholdState),
@@ -54,7 +54,7 @@ evolve_provider_firm_ids(HouseholdState) ->
 			ChosenUnconnectedProviderFirmPrice = firm_get_price(ChosenUnconnectedProviderFirmId),
 			PricePercentDifference = numerics:percent_difference(ChosenConnectedProviderFirmPrice,ChosenUnconnectedProviderFirmPrice),
 			if 
-				(PricePercentDifference > SimConfiguration#sim_config.price_threshold_of_household_picking_new_provider_firm) ->
+				(PricePercentDifference > SimConfiguration#sim_state.price_threshold_of_household_picking_new_provider_firm) ->
 					item_selection:replace_item_in_list(
 						HouseholdState#household_state.provider_firms_ids,
 						ChosenConnectedProviderFirmId, ChosenUnconnectedProviderFirmId);
@@ -89,7 +89,7 @@ evolve_employer_firm_id(HouseholdState) ->
 	SimConfiguration = HouseholdState#household_state.sim_configuration,
 	if 
 		EmployerFirmId == 0 -> %unemployed
-			try_set_new_employer_firm(SimConfiguration#sim_config.max_number_potential_employers_visited, HouseholdState);
+			try_set_new_employer_firm(SimConfiguration#sim_state.max_number_potential_employers_visited, HouseholdState);
 		true ->
 			[_, _, WageRate] = firm_get_work_properties(EmployerFirmId),
 			if
@@ -97,7 +97,7 @@ evolve_employer_firm_id(HouseholdState) ->
 					try_set_new_employer_firm(1, HouseholdState);
 				true ->
 					%only visit new potential employer with certain probability
-					IsEventHappening = numerics:is_happening_with_probability(SimConfiguration#sim_config.probability_of_household_picking_new_provider_firm),
+					IsEventHappening = numerics:is_happening_with_probability(SimConfiguration#sim_state.probability_of_household_picking_new_provider_firm),
 					if
 						IsEventHappening ->
 							try_set_new_employer_firm(1, HouseholdState);
@@ -113,12 +113,12 @@ evolve_planned_monthly_consumption_expenditure(HouseholdState) ->
 	ProviderFirmPrices = lists:map(fun(FirmId) -> firm_get_price(FirmId) end, ProviderFirmIds),
 	AverageGoodsPriceOfProviderFirms = numerics:list_average(ProviderFirmPrices),
 	LiquidityRatio = HouseholdState#household_state.liquidity_h / AverageGoodsPriceOfProviderFirms,
-	min(math:pow(LiquidityRatio, SimConfiguration#sim_config.planned_consumption_increase_decaying_rate), LiquidityRatio).
+	min(math:pow(LiquidityRatio, SimConfiguration#sim_state.planned_consumption_increase_decaying_rate), LiquidityRatio).
 	
 try_to_transact_with_provider_firms(HouseholdState) ->
 	SimConfiguration = HouseholdState#household_state.sim_configuration,
-	PlannedDailyConsumptionDemand = HouseholdState#household_state.planned_monthly_consumption_expenditure / SimConfiguration#sim_config.days_in_one_month,
-	MaxNumAttempts = SimConfiguration#sim_config.max_number_provider_firms_visited,
+	PlannedDailyConsumptionDemand = HouseholdState#household_state.planned_monthly_consumption_expenditure / SimConfiguration#sim_state.days_in_one_month,
+	MaxNumAttempts = SimConfiguration#sim_state.max_number_provider_firms_visited,
 	transact_with_provider_firm(1, MaxNumAttempts, PlannedDailyConsumptionDemand, HouseholdState#household_state.liquidity_h, HouseholdState).
 	
 transact_with_provider_firm(AttemptCycle, MaxNumAttempts, PlannedDailyConsumptionDemand, CurrentHouseholdAgentLiquidity, HouseholdState) ->
@@ -164,7 +164,7 @@ evolve_claimed_wage_rate(HouseholdState) ->
 	[_, _, WageRate] = firm_get_work_properties(EmployerFirmId),
 	case (EmployerFirmId == 0) of
 		true -> %%unemployed
-			(1.0 - SimConfiguration#sim_config.claimed_wage_rate_percentage_reduction_if_unemployed) * HouseholdState#household_state.reservation_wage_rate_h;
+			(1.0 - SimConfiguration#sim_state.claimed_wage_rate_percentage_reduction_if_unemployed) * HouseholdState#household_state.reservation_wage_rate_h;
 		false -> %%employed
 			case (WageRate > HouseholdState#household_state.reservation_wage_rate_h) of
 				true ->

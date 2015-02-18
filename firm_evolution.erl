@@ -22,7 +22,7 @@ evolve_num_consecutive_months_with_all_positions_filled (FirmState) ->
 	 end.
 	 
 evolve_wage_rate(FirmState) ->
-    Mu = numerics:uniform(FirmState#firm_state.sim_configuration#sim_config.wage_growth_rate_uniform_distribution_upper_support),
+    Mu = numerics:uniform(FirmState#firm_state.sim_configuration#sim_state.wage_growth_rate_uniform_distribution_upper_support),
     EvolvedConsecutiveMonthsWithAllPositionsFilled = evolve_num_consecutive_months_with_all_positions_filled(FirmState),
     if
 		(FirmState#firm_state.work_position_has_been_offered == true) and (FirmState#firm_state.work_position_has_been_accepted == false) -> 
@@ -35,8 +35,8 @@ evolve_wage_rate(FirmState) ->
 	
 inventory_lower_upper_limits(FirmState) ->
     {
-       FirmState#firm_state.sim_configuration#sim_config.inventory_lower_limit_ratio * FirmState#firm_state.monthly_demand_of_consumption_goods, 
-       FirmState#firm_state.sim_configuration#sim_config.price_upper_limit_ratio * FirmState#firm_state.monthly_demand_of_consumption_goods
+       FirmState#firm_state.sim_configuration#sim_state.inventory_lower_limit_ratio * FirmState#firm_state.monthly_demand_of_consumption_goods, 
+       FirmState#firm_state.sim_configuration#sim_state.price_upper_limit_ratio * FirmState#firm_state.monthly_demand_of_consumption_goods
     }.
 	
 evolve_work_position_has_been_offered(FirmState) ->
@@ -77,19 +77,19 @@ evolve_num_work_positions_filled(FirmState) ->
 	
 price_lower_upper_limits(FirmState) ->
     {
-       FirmState#firm_state.sim_configuration#sim_config.price_lower_limit_ratio * FirmState#firm_state.monthly_marginal_costs, 
-       FirmState#firm_state.sim_configuration#sim_config.price_upper_limit_ratio * FirmState#firm_state.monthly_marginal_costs
+       FirmState#firm_state.sim_configuration#sim_state.price_lower_limit_ratio * FirmState#firm_state.monthly_marginal_costs, 
+       FirmState#firm_state.sim_configuration#sim_state.price_upper_limit_ratio * FirmState#firm_state.monthly_marginal_costs
     }.  
 	
 evolve_price(FirmState) ->
-	Ni = numerics:uniform(FirmState#firm_state.sim_configuration#sim_config.price_growth_rate_uniform_distribution_upper_support),
+	Ni = numerics:uniform(FirmState#firm_state.sim_configuration#sim_state.price_growth_rate_uniform_distribution_upper_support),
 	{InventoryLowerLimit, InventoryUpperLimit} = inventory_lower_upper_limits(FirmState),
 	{PriceLowerLimit, PriceUpperLimit} = price_lower_upper_limits(FirmState),
 	if 
 		FirmState#firm_state.inventory_f < InventoryLowerLimit ->
 			if 
 				FirmState#firm_state.price_f < PriceUpperLimit ->
-					case numerics:is_happening_with_probability(FirmState#firm_state.sim_configuration#sim_config.probability_of_setting_new_price) of
+					case numerics:is_happening_with_probability(FirmState#firm_state.sim_configuration#sim_state.probability_of_setting_new_price) of
 						true -> (1.0 + Ni) * FirmState#firm_state.price_f;
 						false -> FirmState#firm_state.price_f
 					end;
@@ -99,7 +99,7 @@ evolve_price(FirmState) ->
 		FirmState#firm_state.inventory_f > InventoryUpperLimit ->
 			if 
 				FirmState#firm_state.price_f < PriceLowerLimit ->
-					case numerics:is_happening_with_probability(FirmState#firm_state.sim_configuration#sim_config.probability_of_setting_new_price) of
+					case numerics:is_happening_with_probability(FirmState#firm_state.sim_configuration#sim_state.probability_of_setting_new_price) of
 						true -> (1.0 - Ni) * FirmState#firm_state.price_f;
 						false -> FirmState#firm_state.price_f
 					end;
@@ -115,7 +115,7 @@ evolve_price(FirmState) ->
 % ---------------
 evolve_inventory(FirmState) ->
     FirmState#firm_state.inventory_f + 
-	FirmState#firm_state.sim_configuration#sim_config.technology_productivity_parameter * (length(FirmState#firm_state.employee_ids)).
+	FirmState#firm_state.sim_configuration#sim_state.technology_productivity_parameter * (length(FirmState#firm_state.employee_ids)).
 	
 % ---------------------
 % LAST DAY OF THE MONTH

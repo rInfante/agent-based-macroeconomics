@@ -2,7 +2,7 @@
 -behavior(gen_fsm).
 
 % public API
--export([start/1, start_link/1, daily_step/2, first_day_of_month/2, last_day_of_month/2]).
+-export([start/1, start_link/1, daily_step/3, first_day_of_month/3, last_day_of_month/3]).
 
 %debug
 -export([firm_id_to_str/1, firm_id_to_atom/1]).
@@ -18,24 +18,24 @@ normal/2, normal/3]).
 %%% PUBLIC API
 start(FirmState) ->		
 	gen_fsm:start({local, firm_id_to_atom(FirmState#firm_state.firm_id)}, ?MODULE, FirmState, []).
-start_link(FirmState ) ->
+start_link(FirmState) ->
 	gen_fsm:start_link({local, firm_id_to_atom(FirmState#firm_state.firm_id)}, ?MODULE, FirmState, []).
 
 %%FSM PUBLIC API FUNCTIONS
 
-first_day_of_month(FirmId, MonthNumber) ->
+first_day_of_month(FirmId, MonthNumber, SimState) ->
 	io:format("Processing first day of month: ~w for firm id:~w~n",[MonthNumber, FirmId]),
 	evolve_wage_rate(FirmId).
-daily_step(FirmId, DayNumber) ->
+daily_step(FirmId, DayNumber, SimState) ->
 	io:format("Processing day ~w for firm id:~w~n",[DayNumber, FirmId]),
-	increase_inventory(FirmId).	
-last_day_of_month(FirmId, MonthNumber) ->
+	increase_inventory(FirmId, SimState).	
+last_day_of_month(FirmId, MonthNumber, SimState) ->
 	io:format("Processing last day of month: ~w for firm id:~w~n",[MonthNumber, FirmId]).
 
 %Private functions
-increase_inventory(FirmId) ->
+increase_inventory(FirmId, SimState) ->
 	io:format("Increasing inventory_f of instance ~w. ~n",[FirmId]),
-	gen_fsm:send_event(firm_id_to_atom(FirmId), increase_inventory).
+	gen_fsm:send_event(firm_id_to_atom(FirmId), {increase_inventory, SimState}).
 
 evolve_wage_rate(FirmId) ->
 	io:format("Evolving wage_rate_f of instance ~w. ~n",[FirmId]),
@@ -49,9 +49,10 @@ init(State) ->
 normal(Event, State) ->
 	io:format("Firm ~w state is NORMAL. Inventory:~w, Liquidity:~w, WageRate:~w, Price:~w, Number of Labourers:~w, Employee Ids:~w~n",[State#firm_state.firm_id, State#firm_state.inventory_f, State#firm_state.liquidity_f, State#firm_state.wage_rate_f, State#firm_state.price_f, State#firm_state.num_work_positions_available, State#firm_state.employee_ids]),
 	case Event of
-		increase_inventory ->
+		{increase_inventory, SimState} ->
 			%%TODO: change this to call external functions
-			NewInventory = State#firm_state.inventory_f + State#firm_state.num_work_positions_available * State#firm_state.sim_configuration#sim_config.technology_productivity_parameter,
+			TechnologyProductivityParameter = sim_state:get_value(technology_productivity_parameter, SimState),
+			NewInventory = State#firm_state.inventory_f + State#firm_state.num_work_positions_available * TechnologyProductivityParameter,
 			io:format("Firm id:~w is increasing inventory_f from ~w to ~w~n",[State#firm_state.firm_id,State#firm_state.inventory_f, NewInventory]),			
 			{next_state, normal, State#firm_state{inventory_f=NewInventory}, 10000};
 		evolve_wage_rate ->

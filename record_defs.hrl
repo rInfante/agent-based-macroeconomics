@@ -1,4 +1,4 @@
--record(sim_config, 
+-record(sim_state, 
 	{
 		days_in_one_month,
 		num_household_to_firm_trading_relations,
@@ -38,9 +38,7 @@
 		fired_employee_id,
 		monthly_demand_of_consumption_goods,
 		monthly_marginal_costs,		
-		employee_ids,
-		
-		sim_configuration
+		employee_ids
 	}).	
 	
 -record(household_state, 
@@ -50,7 +48,5 @@
 		liquidity_h, %m_h
 		planned_monthly_consumption_expenditure, %c_r_h
 		provider_firms_ids, %type A firms
-		employer_firm_id, % type B firm
-		
-		sim_configuration
+		employer_firm_id % type B firm
 	}).

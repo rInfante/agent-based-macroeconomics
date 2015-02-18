@@ -2,7 +2,7 @@
 -behavior(gen_fsm).
 
 % public API
--export([start/1, start_link/1, daily_step/2, first_day_of_month/2, last_day_of_month/2]).
+-export([start/1, start_link/1, daily_step/3, first_day_of_month/3, last_day_of_month/3]).
 
 %% gen_fsm callbacks
 -export([init/1,
@@ -19,18 +19,18 @@ start_link(HouseholdState) ->
 	gen_fsm:start_link({local, household_id_to_atom(HouseholdState#household_state.household_id)}, ?MODULE, HouseholdState, []).
 
 %%FSM PUBLIC API FUNCTIONS
-daily_step(HouseholdId, DayNumber) ->
+daily_step(HouseholdId, DayNumber, SimState) ->
 	io:format("Processing day ~w for household id: ~w~n",[DayNumber, HouseholdId]),
-	spend(HouseholdId).
-first_day_of_month(HouseholdId, MonthNumber) ->
+	spend(HouseholdId, SimState).%%TODO: REMOVE THIS
+first_day_of_month(HouseholdId, MonthNumber, SimState) ->
 	io:format("Processing first day of month: ~w for household id: ~w~n",[MonthNumber, HouseholdId]).
-last_day_of_month(HouseholdId, MonthNumber) ->
+last_day_of_month(HouseholdId, MonthNumber, SimState) ->
 	io:format("Processing last day of month: ~w for household id: ~w~n",[MonthNumber, HouseholdId]).
 
 %Private functions
-spend(HouseholdId) ->
+spend(HouseholdId, SimState) -> %%TODO: REMOVE THIS
 	io:format("performing a spend: ~n",[]),
-	gen_fsm:send_event(household_id_to_atom(HouseholdId), spend).
+	gen_fsm:send_event(household_id_to_atom(HouseholdId), {spend, SimState}).
 payrise(HouseholdId, NewWage) ->
 	io:format("giving a payrise to household. new wage: ~w~n",[NewWage]),
 	gen_fsm:send_event(household_id_to_atom(HouseholdId), {payrise,NewWage}).
@@ -46,8 +46,9 @@ normal(Event, State) ->
 		{payrise, NewWage} ->
 			io:format("Household id:~w got payrise... from ~w to ~w~n",[State#household_state.household_id, State#household_state.reservation_wage_rate_h, NewWage]),
 			{next_state, normal, #household_state{reservation_wage_rate_h=NewWage}, 1000};
-		spend ->
-			Expenditure = State#household_state.planned_monthly_consumption_expenditure/State#household_state.sim_configuration#sim_config.days_in_one_month,
+		{spend, SimState}-> %%TODO: REMOVE THIS
+			DaysInOneMonth = SimState#sim_state.days_in_one_month,
+			Expenditure = State#household_state.planned_monthly_consumption_expenditure/DaysInOneMonth,
 			NewLiquidity = State#household_state.liquidity_h-Expenditure,
 			io:format("Household ~w is spending ~w; Liquidity gone from: ~w to: ~w~n",[State#household_state.household_id, Expenditure, State#household_state.liquidity_h, NewLiquidity]),			
 			{next_state, normal, State#household_state{liquidity_h=NewLiquidity}, 10000};

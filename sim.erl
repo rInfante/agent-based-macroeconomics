@@ -2,26 +2,26 @@
 -behavior(gen_fsm).
 
 % public API
--export([start/3, start_link/3, new_step/1, get_firm_ids_from_lookup/1]).
+-export([start/3, start_link/3, new_step/1]).
 
 %% gen_fsm callbacks
 -export([init/1,
 handle_event/3, handle_sync_event/4, handle_info/3,terminate/3, code_change/4,
- %cusatom sim_config names
+ %custom sim_state names
 normal/2]).
 
 -include_lib("record_defs.hrl").
 
 %%% PUBLIC API
-start(SimConfiguration, Firms, Households) ->	
+start(SimState, Firms, Households) ->	
 	lists:foreach(fun(F)-> firm:start(F) end, Firms),
 	lists:foreach(fun(H)-> household:start(H) end, Households),
-	gen_fsm:start({local, sim}, ?MODULE, SimConfiguration, []).
+	gen_fsm:start({local, sim}, ?MODULE, SimState, []).
 	
-start_link(SimConfiguration, Firms, Households) ->	  
+start_link(SimState, Firms, Households) ->	  
 	lists:foreach(fun(F)-> firm:start(F) end, Firms),
 	lists:foreach(fun(H)-> household:start(H) end, Households),
-	gen_fsm:start_link({local, sim}, ?MODULE, SimConfiguration, []).
+	gen_fsm:start_link({local, sim}, ?MODULE, SimState, []).
 
 %%FSM PUBLIC API FUNCTIONS
 new_step(StepNumber) ->
@@ -29,37 +29,40 @@ new_step(StepNumber) ->
 	gen_fsm:send_event(sim, {new_step, StepNumber}).
 
 %GEN_FSM CALLBACKS
-init(SimConfiguration) ->
+init(SimState) ->
 	io:format("initialising SIM state~n"),
-	{ok, normal, SimConfiguration, 0}.
+	{ok, normal, SimState, 0}.
 
 normal(Event, State) ->
-	io:format("State = ~w~n", [State]),	
+	io:format("State = ~w~n", [State]),		
 	case Event of
 		{new_step, StepNumber} ->
+			DaysInOneMonth = sim_state:get_value(days_in_one_month, State),
+			HouseholdIds = sim_state:get_value(household_ids, State),
+			FirmIds = sim_state:get_value(firm_ids, State),
 			io:format("New simulation step: ~w~n",[StepNumber]),
-			if 
-				(StepNumber rem State#sim_config.days_in_one_month == 1.0) ->
-					MonthNumber= 1 + (StepNumber div State#sim_config.days_in_one_month),
-					io:format("This step is the first day of the month. Month number: ~w~n",[MonthNumber]),	
-					lists:foreach(fun(Id)->household:first_day_of_month(Id, MonthNumber) end, State#sim_config.household_ids), %TODO: also inject Sim_State
-					lists:foreach(fun(Id)->firm:first_day_of_month(Id, MonthNumber) end, get_firm_ids_from_lookup(State#sim_config.firm_employees_lookup)); %TODO: also inject Sim_State					
+			case is_first_day_of_month(StepNumber, DaysInOneMonth) of 
 				true ->
+					MonthNumber = 1 + (StepNumber div DaysInOneMonth),
+					io:format("This step is the first day of the month. Month number: ~w~n",[MonthNumber]),	
+					lists:foreach(fun(Id)->household:first_day_of_month(Id, MonthNumber, State) end, HouseholdIds), 
+					lists:foreach(fun(Id)->firm:first_day_of_month(Id, MonthNumber, State) end, FirmIds); %TODO: also inject Sim_State					
+				false ->
 					io:format("This step is NOT the first day of the month.~n",[])
 			end,
-			if 
-				(StepNumber rem State#sim_config.days_in_one_month == 0.0) ->
-					MonthNumber1= StepNumber / State#sim_config.days_in_one_month,
-					io:format("This step is the last day of the month. Month number: ~w~n",[MonthNumber1]),		
-					lists:foreach(fun(Id)->household:last_day_of_month(Id, MonthNumber1) end, State#sim_config.household_ids), %TODO: also inject Sim_State
-					lists:foreach(fun(Id)->firm:last_day_of_month(Id, MonthNumber1) end, get_firm_ids_from_lookup(State#sim_config.firm_employees_lookup)); %TODO: also inject Sim_State							
+			case is_first_last_of_month(StepNumber, DaysInOneMonth) of 
 				true ->
+					MonthNumber1 = StepNumber div DaysInOneMonth,
+					io:format("This step is the last day of the month. Month number: ~w~n",[MonthNumber1]),		
+					lists:foreach(fun(Id)->household:last_day_of_month(Id, MonthNumber1, State) end, HouseholdIds),
+					lists:foreach(fun(Id)->firm:last_day_of_month(Id, MonthNumber1, State) end, FirmIds); %TODO: also inject Sim_State							
+				false ->
 					io:format("This step is NOT the last day of the month.~n",[])
 			end,
-			lists:foreach(fun(Id)->household:daily_step(Id, StepNumber) end, State#sim_config.household_ids), %TODO: also inject Sim_State
-			lists:foreach(fun(Id)->firm:daily_step(Id, StepNumber) end, get_firm_ids_from_lookup(State#sim_config.firm_employees_lookup)), %TODO: also inject Sim_State
+			lists:foreach(fun(Id)->household:daily_step(Id, StepNumber, State) end, HouseholdIds), 
+			lists:foreach(fun(Id)->firm:daily_step(Id, StepNumber, State) end, FirmIds), %TODO: also inject Sim_State
 			%TODO:here query all firms and households to regenerate household and firm tuple list containing all firm-household relationships
-			%then inject these into Sim state (sim_configuration record)
+			%then inject these into Sim state (sim_state record)
 			{next_state, normal, State, 10000};
 		timeout ->
 			io:format("Nothing has happened in the simulator...~n"),
@@ -83,8 +86,8 @@ terminate(_Reason, _StateName, _State) ->
 code_change(_OldVsn, StateName, State, _Extra) ->
     {ok, StateName, State}.
 	
-%PRIVATE
-%FirmToEmployeesLookup = [{1, [11,12]}, {2, [21, 22, 23]}, {3, [31, 32]} , ...
-%return id list: [1, 2, 3, 4, ...
-get_firm_ids_from_lookup(FirmToEmployeesLookup)->
-	lists:map(fun({FirmId, _EmployeeIds}) ->FirmId end, FirmToEmployeesLookup).
+%PRIVATE	
+is_first_day_of_month(StepNumber, DaysInOneMonth) -> 
+	StepNumber rem DaysInOneMonth == 1.0.
+is_first_last_of_month(StepNumber, DaysInOneMonth) -> 
+	StepNumber rem DaysInOneMonth == 0.0.	
