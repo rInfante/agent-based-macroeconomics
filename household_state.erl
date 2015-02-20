@@ -1,6 +1,6 @@
 -module(household_state).
 
--export([get_value/2]).
+-export([get_value/2, get_values/2]).
 
 -include_lib("record_defs.hrl").
 
@@ -16,3 +16,6 @@ get_value(provider_firms_ids, HouseholdState) ->
 	HouseholdState#household_state.provider_firms_ids;	
 get_value(employer_firm_id, HouseholdState) ->
 	HouseholdState#household_state.employer_firm_id.
+	
+get_values(Args, HouseholdState) ->
+	[get_value(Arg, HouseholdState) || Arg <- Args].	

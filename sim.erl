@@ -46,7 +46,7 @@ normal(Event, State) ->
 					MonthNumber = 1 + (StepNumber div DaysInOneMonth),
 					io:format("This step is the first day of the month. Month number: ~w~n",[MonthNumber]),	
 					lists:foreach(fun(Id)->household:first_day_of_month(Id, MonthNumber, State) end, HouseholdIds), 
-					lists:foreach(fun(Id)->firm:first_day_of_month(Id, MonthNumber, State) end, FirmIds); %TODO: also inject Sim_State					
+					lists:foreach(fun(Id)->firm:first_day_of_month(Id, MonthNumber, State) end, FirmIds);					
 				false ->
 					io:format("This step is NOT the first day of the month.~n",[])
 			end,
@@ -55,12 +55,12 @@ normal(Event, State) ->
 					MonthNumber1 = StepNumber div DaysInOneMonth,
 					io:format("This step is the last day of the month. Month number: ~w~n",[MonthNumber1]),		
 					lists:foreach(fun(Id)->household:last_day_of_month(Id, MonthNumber1, State) end, HouseholdIds),
-					lists:foreach(fun(Id)->firm:last_day_of_month(Id, MonthNumber1, State) end, FirmIds); %TODO: also inject Sim_State							
+					lists:foreach(fun(Id)->firm:last_day_of_month(Id, MonthNumber1, State) end, FirmIds); 						
 				false ->
 					io:format("This step is NOT the last day of the month.~n",[])
 			end,
 			lists:foreach(fun(Id)->household:daily_step(Id, StepNumber, State) end, HouseholdIds), 
-			lists:foreach(fun(Id)->firm:daily_step(Id, StepNumber, State) end, FirmIds), %TODO: also inject Sim_State
+			lists:foreach(fun(Id)->firm:daily_step(Id, StepNumber, State) end, FirmIds), 
 			%TODO:here query all firms and households to regenerate household and firm tuple list containing all firm-household relationships
 			%then inject these into Sim state (sim_state record)
 			{next_state, normal, State, 10000};

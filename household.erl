@@ -74,7 +74,8 @@ terminate(_Reason, _StateName, _State) ->
     ok.
 code_change(_OldVsn, StateName, State, _Extra) ->
     {ok, StateName, State}.
-	
+
+%%TODO: MOVE!!!	
 %%PRIVATE
 household_id_to_str(HouseholdId) ->
 	string:concat("HH", integer_to_list(HouseholdId)).

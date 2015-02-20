@@ -50,8 +50,8 @@ evolve_provider_firm_ids(HouseholdState) ->
 		IsEventHappening ->
 			ChosenConnectedProviderFirmId = choose_random_provider_firm_id(HouseholdState),
 			ChosenUnconnectedProviderFirmId = choose_unconnected_firm_id_randomly_weighted_on_employee_count(HouseholdState),
-			ChosenConnectedProviderFirmPrice = firm_get_price(ChosenConnectedProviderFirmId),
-			ChosenUnconnectedProviderFirmPrice = firm_get_price(ChosenUnconnectedProviderFirmId),
+			ChosenConnectedProviderFirmPrice = firm:get_fsm_value(price_f, ChosenConnectedProviderFirmId),
+			ChosenUnconnectedProviderFirmPrice = firm:get_fsm_value(price_f, ChosenUnconnectedProviderFirmId),
 			PricePercentDifference = numerics:percent_difference(ChosenConnectedProviderFirmPrice,ChosenUnconnectedProviderFirmPrice),
 			if 
 				(PricePercentDifference > SimConfiguration#sim_state.price_threshold_of_household_picking_new_provider_firm) ->
@@ -71,7 +71,9 @@ try_set_new_employer_firm(MaxNumAttempts, HouseholdState) ->
 	
 set_new_employer_firm(MaxNumAttempts, AttemptCycle, HouseholdState) ->
 	ChosenPotentialEmployerFirmId = choose_potential_employer_firm(HouseholdState),
-	[WorkPositionHasBeenOffered, WorkPositionHasBeenAccepted, WageRate] = firm_get_work_properties(ChosenPotentialEmployerFirmId),
+	[WorkPositionHasBeenOffered, WorkPositionHasBeenAccepted, WageRate] = firm:get_fsm_values(
+			[work_position_has_been_offered, work_position_has_been_accepted, wage_rate_f], 
+			ChosenPotentialEmployerFirmId),
 	if
 		WorkPositionHasBeenOffered and (not WorkPositionHasBeenAccepted) and WageRate > HouseholdState#household_state.reservation_wage_rate_h ->
 			ChosenPotentialEmployerFirmId;
@@ -91,7 +93,7 @@ evolve_employer_firm_id(HouseholdState) ->
 		EmployerFirmId == 0 -> %unemployed
 			try_set_new_employer_firm(SimConfiguration#sim_state.max_number_potential_employers_visited, HouseholdState);
 		true ->
-			[_, _, WageRate] = firm_get_work_properties(EmployerFirmId),
+			WageRate = firm:get_fsm_value(wage_rate_f, EmployerFirmId), 
 			if
 				HouseholdState#household_state.reservation_wage_rate_h < WageRate -> %unhappy employee
 					try_set_new_employer_firm(1, HouseholdState);
@@ -110,7 +112,7 @@ evolve_employer_firm_id(HouseholdState) ->
 evolve_planned_monthly_consumption_expenditure(HouseholdState) ->
 	SimConfiguration = HouseholdState#household_state.sim_configuration,
 	ProviderFirmIds = HouseholdState#household_state.provider_firms_ids,
-	ProviderFirmPrices = lists:map(fun(FirmId) -> firm_get_price(FirmId) end, ProviderFirmIds),
+	ProviderFirmPrices = lists:map(fun(FirmId) -> firm:get_fsm_value(price_f, FirmId) end, ProviderFirmIds),
 	AverageGoodsPriceOfProviderFirms = numerics:list_average(ProviderFirmPrices),
 	LiquidityRatio = HouseholdState#household_state.liquidity_h / AverageGoodsPriceOfProviderFirms,
 	min(math:pow(LiquidityRatio, SimConfiguration#sim_state.planned_consumption_increase_decaying_rate), LiquidityRatio).
@@ -123,8 +125,8 @@ try_to_transact_with_provider_firms(HouseholdState) ->
 	
 transact_with_provider_firm(AttemptCycle, MaxNumAttempts, PlannedDailyConsumptionDemand, CurrentHouseholdAgentLiquidity, HouseholdState) ->
 	ChosenProviderFirmId = choose_random_provider_firm_id(HouseholdState),
-	ChosenProviderFirmInventory =  firm_get_inventory(ChosenProviderFirmId),
-	ChosenProviderFirmPrice = firm_get_price(ChosenProviderFirmId),
+	ChosenProviderFirmInventory = firm:get_fsm_value(inventory_f, ChosenProviderFirmId),
+	ChosenProviderFirmPrice = firm:get_fsm_value(price_f, ChosenProviderFirmId),
 	case (ChosenProviderFirmInventory > PlannedDailyConsumptionDemand)
 		  and (CurrentHouseholdAgentLiquidity >= ChosenProviderFirmPrice * PlannedDailyConsumptionDemand) of
 		true ->
@@ -155,13 +157,13 @@ evolve_liquidity_daily(HouseholdState) ->
 evolve_liquidity_from_salary(HouseholdState) ->
     %%TODO: Employer of household to pay salary and reduice its liquidity: replace line below with single method whihc reduces firm liquidity and returns WageRate
 	EmployerFirmId = HouseholdState#household_state.employer_firm_id,
-	[_, _, WageRate] = firm_get_work_properties(EmployerFirmId),	
+	WageRate = firm:get_fsm_value(wage_rate_f, EmployerFirmId),	
     HouseholdState#household_state.liquidity_h + WageRate.
 
 evolve_claimed_wage_rate(HouseholdState) ->
 	SimConfiguration = HouseholdState#household_state.sim_configuration,
 	EmployerFirmId = HouseholdState#household_state.employer_firm_id,
-	[_, _, WageRate] = firm_get_work_properties(EmployerFirmId),
+	WageRate = firm:get_fsm_value(wage_rate_f, EmployerFirmId),
 	case (EmployerFirmId == 0) of
 		true -> %%unemployed
 			(1.0 - SimConfiguration#sim_state.claimed_wage_rate_percentage_reduction_if_unemployed) * HouseholdState#household_state.reservation_wage_rate_h;
@@ -173,17 +175,3 @@ evolve_claimed_wage_rate(HouseholdState) ->
 					HouseholdState#household_state.reservation_wage_rate_h
 			end
 	end.
-	
-%%PRIVATE	
-%%communication other agents
-%%TODO: possibly move to other module?
-%%TODO: possibly get from firm a household state record rather than separate properties??
-
-firm_get_price(FirmId) ->
-	gen_fsm:sync_send_event(FirmId, get_price).
-	
-firm_get_inventory(FirmId) ->
-	gen_fsm:sync_send_event(FirmId, get_inventory).
-	
-firm_get_work_properties(FirmId) ->
-	gen_fsm:sync_send_event(FirmId, get_work_properties).

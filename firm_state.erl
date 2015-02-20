@@ -1,6 +1,6 @@
 -module(firm_state).
 
--export([get_value/2]).
+-export([get_value/2, get_values/2, firm_id_to_str/1, firm_id_to_atom/1, get_fsm_value/2, get_fsm_values/2]).
 
 -include_lib("record_defs.hrl").
 
@@ -31,4 +31,18 @@ get_value(monthly_demand_of_consumption_goods, FirmState) ->
 get_value(monthly_marginal_costs, FirmState) ->
 	FirmState#firm_state.monthly_marginal_costs;
 get_value(employee_ids, FirmState) ->
-	FirmState#firm_state.employee_ids.
+	FirmState#firm_state.employee_ids;
+get_value(firm_id_as_atom, FirmState) ->
+	FirmId = FirmState#firm_state.firm_id,	
+	firm_id_to_atom(FirmId).
+	
+get_values(Args, FirmState) ->
+	[get_value(Arg, FirmState) || Arg <- Args].
+
+firm_id_to_str(FirmId) ->
+	string:concat("FI", integer_to_list(FirmId)).
+	
+firm_id_to_atom(FirmId) ->
+	FirmIdStr = firm_id_to_str(FirmId),
+	list_to_atom(FirmIdStr).
+	

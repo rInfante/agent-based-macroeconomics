@@ -2,10 +2,7 @@
 -behavior(gen_fsm).
 
 % public API
--export([start/1, start_link/1, daily_step/3, first_day_of_month/3, last_day_of_month/3]).
-
-%debug
--export([firm_id_to_str/1, firm_id_to_atom/1]).
+-export([start/1, start_link/1, daily_step/3, first_day_of_month/3, last_day_of_month/3, get_fsm_value/2, get_fsm_values/2]).
 
 %% gen_fsm callbacks
 -export([init/1,
@@ -17,9 +14,9 @@ normal/2, normal/3]).
 
 %%% PUBLIC API
 start(FirmState) ->		
-	gen_fsm:start({local, firm_id_to_atom(FirmState#firm_state.firm_id)}, ?MODULE, FirmState, []).
+	gen_fsm:start({local, firm_state:get_value(firm_id_as_atom, FirmState)}, ?MODULE, FirmState, []).
 start_link(FirmState) ->
-	gen_fsm:start_link({local, firm_id_to_atom(FirmState#firm_state.firm_id)}, ?MODULE, FirmState, []).
+	gen_fsm:start_link({local, firm_state:get_value(firm_id_as_atom, FirmState)}, ?MODULE, FirmState, []).
 
 %%FSM PUBLIC API FUNCTIONS
 
@@ -31,65 +28,61 @@ daily_step(FirmId, DayNumber, SimState) ->
 	increase_inventory(FirmId, SimState).	
 last_day_of_month(FirmId, MonthNumber, SimState) ->
 	io:format("Processing last day of month: ~w for firm id:~w~n",[MonthNumber, FirmId]).
-
+	
+get_fsm_value(Arg, FirmId) ->
+	FirmState = gen_fsm:sync_send_event(FirmId, get_state),
+	firm_state:get_value(Arg, FirmState).
+get_fsm_values(Args, FirmId) ->
+	FirmState = gen_fsm:sync_send_event(FirmId, get_state),
+	firm_state:get_values(Args, FirmState).	
+	
 %Private functions
+
 increase_inventory(FirmId, SimState) ->
 	io:format("Increasing inventory_f of instance ~w. ~n",[FirmId]),
-	gen_fsm:send_event(firm_id_to_atom(FirmId), {increase_inventory, SimState}).
-
+	gen_fsm:send_event(firm_state:firm_id_to_atom(FirmId), {increase_inventory, SimState}).
 evolve_wage_rate(FirmId) ->
 	io:format("Evolving wage_rate_f of instance ~w. ~n",[FirmId]),
-	gen_fsm:send_event(firm_id_to_atom(FirmId), evolve_wage_rate).	
+	gen_fsm:send_event(firm_state:firm_id_to_atom(FirmId), evolve_wage_rate).
 
 %GEN_FSM CALLBACKS
 init(State) ->
-	io:format("FIRM_FSM initialising state with Id:~w, Inventory:~w, Liquidity:~w, WageRate: ~w, Price: ~w, Number of Labourers:~w, , EmployeeIds: ~w~n",[State#firm_state.firm_id, State#firm_state.inventory_f, State#firm_state.liquidity_f, State#firm_state.wage_rate_f, State#firm_state.price_f, State#firm_state.num_work_positions_available, State#firm_state.employee_ids]),
+	io:format("FIRM_FSM initialising state with Id:~w, Inventory:~w, Liquidity:~w, WageRate: ~w, Price: ~w, Number of Labourers:~w, EmployeeIds: ~w~n",
+		firm_state:get_values([firm_id, inventory_f, liquidity_f, wage_rate_f, price_f, num_work_positions_available, employee_ids], State)),		
 	{ok, normal, State, 2000}.
 
 normal(Event, State) ->
-	io:format("Firm ~w state is NORMAL. Inventory:~w, Liquidity:~w, WageRate:~w, Price:~w, Number of Labourers:~w, Employee Ids:~w~n",[State#firm_state.firm_id, State#firm_state.inventory_f, State#firm_state.liquidity_f, State#firm_state.wage_rate_f, State#firm_state.price_f, State#firm_state.num_work_positions_available, State#firm_state.employee_ids]),
+	FirmId = firm_state:get_value(firm_id, State),
+	io:format("Firm ~w state is NORMAL. Inventory:~w, Liquidity:~w, WageRate:~w, Price:~w, Number of Labourers:~w, Employee Ids:~w~n",
+		firm_state:get_values([firm_id, inventory_f, liquidity_f, wage_rate_f, price_f, num_work_positions_available, employee_ids], State)),	
 	case Event of
 		{increase_inventory, SimState} ->
 			%%TODO: change this to call external functions
 			TechnologyProductivityParameter = sim_state:get_value(technology_productivity_parameter, SimState),
-			NewInventory = State#firm_state.inventory_f + State#firm_state.num_work_positions_available * TechnologyProductivityParameter,
-			io:format("Firm id:~w is increasing inventory_f from ~w to ~w~n",[State#firm_state.firm_id,State#firm_state.inventory_f, NewInventory]),			
+			[Inventory, NumWorkPositionsAvailable] = firm_state:get_values([inventory_f, num_work_positions_available], State),
+			NewInventory = Inventory + NumWorkPositionsAvailable * TechnologyProductivityParameter,
+			io:format("Firm id:~w is increasing inventory_f from ~w to ~w~n",[FirmId, Inventory, NewInventory]),			
 			{next_state, normal, State#firm_state{inventory_f=NewInventory}, 10000};
 		evolve_wage_rate ->
+			WageRate = firm_state:get_value(wage_rate_f, State),
 			NewWageRate = firm_evolution:evolve_wage_rate(State),
-			io:format("Firm id:~w is changing wage_rate_f from ~w to ~w~n",[State#firm_state.firm_id,State#firm_state.wage_rate_f, NewWageRate]),			
+			io:format("Firm id:~w is changing wage_rate_f from ~w to ~w~n",[FirmId, WageRate, NewWageRate]),			
 			{next_state, normal, State#firm_state{wage_rate_f=NewWageRate}, 10000};			
 		timeout ->
-			io:format("Nothing has happened to NORMAL firm id:~w...~n",[State#firm_state.firm_id]),
+			io:format("Nothing has happened to NORMAL firm id:~w...~n",[FirmId]),
 			{next_state, normal, State, 10000};
 		_ ->
 			io:format("Unknown event. Staying NORMAL.~n"),
 			{next_state, normal, State, 2000}
 	end.
 normal(Event, From, State) ->
-	io:format("An event has been sent from: ~w to Firm Id: ~w~n",[From, State#firm_state.firm_id]),
+	FirmId = firm_state:get_value(firm_id, State),
+	io:format("An event has been sent from: ~w to Firm Id: ~w~n",[From, FirmId]),
 	case Event of
-		get_price ->			
-			Price = State#firm_state.price_f,
-			io:format("Firm id:~w has received a get price request. Price: ~w~n",[State#firm_state.firm_id, State#firm_state.price_f]),			
-			{reply, Price, normal, State};
-		get_inventory ->			
-			Inventory = State#firm_state.inventory_f,
-			io:format("Firm id:~w has received a get inventory request. Price: ~w~n",[State#firm_state.firm_id, State#firm_state.inventory_f]),			
-			{reply, Inventory, normal, State};			
-		get_work_properties ->
-			WorkProperties = {
-								State#firm_state.work_position_has_been_offered,
-								State#firm_state.work_position_has_been_accepted,
-								State#firm_state.wage_rate_f
- 							},
-			io:format("Firm id:~w has received a get work properties request. Position Offered: ~w; Position Accepted: ~w; Wage Rate: ~w~n",
-								[State#firm_state.firm_id, State#firm_state.work_position_has_been_offered,
-								State#firm_state.work_position_has_been_accepted,
-								State#firm_state.wage_rate_f]),			
-			{reply, WorkProperties, normal, State};
+		get_state ->
+			{reply, State, normal, State};
 		timeout ->
-			io:format("Nothing has happened to NORMAL firm id:~w...~n",[State#firm_state.firm_id]),
+			io:format("Nothing has happened to NORMAL firm id:~w...~n",[FirmId]),
 			{next_state, normal, State, 10000};
 		_ ->
 			io:format("Unknown event. Staying NORMAL.~n"),
@@ -109,14 +102,7 @@ terminate(_Reason, _StateName, _State) ->
     ok.
 code_change(_OldVsn, StateName, State, _Extra) ->
     {ok, StateName, State}.
-	
-%%PRIVATE
-firm_id_to_str(FirmId) ->
-	string:concat("FI", integer_to_list(FirmId)).
-	
-firm_id_to_atom(FirmId) ->
-	FirmIdStr = firm_id_to_str(FirmId),
-	list_to_atom(FirmIdStr).
+
 
 
 
