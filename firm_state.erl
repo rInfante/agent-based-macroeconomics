@@ -1,6 +1,6 @@
 -module(firm_state).
 
--export([get_value/2, get_values/2, firm_id_to_str/1, firm_id_to_atom/1, get_fsm_value/2, get_fsm_values/2]).
+-export([get_value/2, get_values/2, firm_id_to_str/1, firm_id_to_atom/1]).
 
 -include_lib("record_defs.hrl").
 
@@ -35,7 +35,8 @@ get_value(employee_ids, FirmState) ->
 get_value(firm_id_as_atom, FirmState) ->
 	FirmId = FirmState#firm_state.firm_id,	
 	firm_id_to_atom(FirmId).
-	
+
+%%TODO: This can be generalised	
 get_values(Args, FirmState) ->
 	[get_value(Arg, FirmState) || Arg <- Args].
 

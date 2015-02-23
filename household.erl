@@ -7,16 +7,16 @@
 %% gen_fsm callbacks
 -export([init/1,
 handle_event/3, handle_sync_event/4, handle_info/3,terminate/3, code_change/4,
- %cusatom state names
+ %custom state names
 normal/2]).
 
 -include_lib("record_defs.hrl").
 
 %%% PUBLIC API
 start(HouseholdState) ->
-	gen_fsm:start({local, household_id_to_atom(HouseholdState#household_state.household_id)}, ?MODULE, HouseholdState, []).
+	gen_fsm:start({local, household_state:get_value(household_id_as_atom, HouseholdState) }, ?MODULE, HouseholdState, []).
 start_link(HouseholdState) ->
-	gen_fsm:start_link({local, household_id_to_atom(HouseholdState#household_state.household_id)}, ?MODULE, HouseholdState, []).
+	gen_fsm:start_link({local, household_state:get_value(household_id_as_atom, HouseholdState) }, ?MODULE, HouseholdState, []).
 
 %%FSM PUBLIC API FUNCTIONS
 daily_step(HouseholdId, DayNumber, SimState) ->
@@ -30,30 +30,34 @@ last_day_of_month(HouseholdId, MonthNumber, SimState) ->
 %Private functions
 spend(HouseholdId, SimState) -> %%TODO: REMOVE THIS
 	io:format("performing a spend: ~n",[]),
-	gen_fsm:send_event(household_id_to_atom(HouseholdId), {spend, SimState}).
-payrise(HouseholdId, NewWage) ->
+	gen_fsm:send_event(household_state:household_id_to_atom(HouseholdId), {spend, SimState}).
+payrise(HouseholdId, NewWage) -> %%TODO: REMOVE THIS?
 	io:format("giving a payrise to household. new wage: ~w~n",[NewWage]),
-	gen_fsm:send_event(household_id_to_atom(HouseholdId), {payrise,NewWage}).
+	gen_fsm:send_event(household_state:household_id_to_atom(HouseholdId), {payrise,NewWage}).
 
 %GEN_FSM CALLBACKS
 init(State) ->
-	io:format("HOUSEHOLD_FSM initialising household_state with Id:~w, ReservationWageRate:~w, Liquidity:~w, Monthly Demand~w~n",[State#household_state.household_id, State#household_state.reservation_wage_rate_h, State#household_state.liquidity_h, State#household_state.planned_monthly_consumption_expenditure]),
+	io:format("HOUSEHOLD_FSM initialising household_state with Id:~w, ReservationWageRate:~w, Liquidity:~w, Monthly Demand~w~n",
+		household_state:get_values([household_id, reservation_wage_rate_h, liquidity_h, planned_monthly_consumption_expenditure], State)),	
 	{ok, normal, State, 2000}.
 
 normal(Event, State) ->
-	io:format("Household id:~w household_state is NORMAL.  ReservationWageRate:~w, Liquidity:~w, Monthly Demand: ~w~n",[State#household_state.household_id, State#household_state.reservation_wage_rate_h, State#household_state.liquidity_h, State#household_state.planned_monthly_consumption_expenditure]),
+	HouseholdId = household_state:get_value(household_id, State),
+	io:format("Household id:~w household_state is NORMAL.  ReservationWageRate:~w, Liquidity:~w, Monthly Demand: ~w~n",
+		household_state:get_values([household_id, reservation_wage_rate_h, liquidity_h, planned_monthly_consumption_expenditure], State)),	
 	case Event of
-		{payrise, NewWage} ->
-			io:format("Household id:~w got payrise... from ~w to ~w~n",[State#household_state.household_id, State#household_state.reservation_wage_rate_h, NewWage]),
+		{payrise, NewWage} -> %%TODO: REMOVE THIS?
+			CurrentWage = household_state:get_value(reservation_wage_rate_h, State),
+			io:format("Household id:~w got payrise... from ~w to ~w~n",[HouseholdId, CurrentWage, NewWage]),
 			{next_state, normal, #household_state{reservation_wage_rate_h=NewWage}, 1000};
 		{spend, SimState}-> %%TODO: REMOVE THIS
 			DaysInOneMonth = SimState#sim_state.days_in_one_month,
 			Expenditure = State#household_state.planned_monthly_consumption_expenditure/DaysInOneMonth,
 			NewLiquidity = State#household_state.liquidity_h-Expenditure,
-			io:format("Household ~w is spending ~w; Liquidity gone from: ~w to: ~w~n",[State#household_state.household_id, Expenditure, State#household_state.liquidity_h, NewLiquidity]),			
+			io:format("Household ~w is spending ~w; Liquidity gone from: ~w to: ~w~n",[HouseholdId, Expenditure, State#household_state.liquidity_h, NewLiquidity]),			
 			{next_state, normal, State#household_state{liquidity_h=NewLiquidity}, 10000};
 		timeout ->
-			io:format("Nothing has happened to NORMAL household id:~w...~n",[State#household_state.household_id]),
+			io:format("Nothing has happened to NORMAL household id:~w...~n",[HouseholdId]),
 			{next_state, normal, State, 10000};
 		_ ->
 			io:format("Unknown event. Staying NORMAL.~n"),
@@ -75,14 +79,7 @@ terminate(_Reason, _StateName, _State) ->
 code_change(_OldVsn, StateName, State, _Extra) ->
     {ok, StateName, State}.
 
-%%TODO: MOVE!!!	
-%%PRIVATE
-household_id_to_str(HouseholdId) ->
-	string:concat("HH", integer_to_list(HouseholdId)).
 	
-household_id_to_atom(HouseholdId) ->
-	HouseholdIdStr = household_id_to_str(HouseholdId),
-	list_to_atom(HouseholdIdStr).	
 
 
 

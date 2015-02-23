@@ -1,6 +1,6 @@
 -module(firm_evolution).
 
--export([evolve_num_consecutive_months_with_all_positions_filled/1, evolve_wage_rate/1,
+-export([evolve_wage_rate/2,
 			inventory_lower_upper_limits/1, evolve_work_position_has_been_offered/1,
 			evolve_num_work_positions/1, evolve_fired_employee_id/1,
 			evolve_work_position_has_been_accepted/1, evolve_num_work_positions_filled/1,
@@ -8,30 +8,39 @@
 			evolve_inventory/1, evolve_liquidity_for_salary/1
 			]).
 
+%DEBUG			
+-export([evolve_num_consecutive_months_with_all_positions_filled/1]).
+
 -include_lib("record_defs.hrl").
 
 % ---------------------
 % FIRST DAY OF THE MONTH
 % ---------------------
-evolve_num_consecutive_months_with_all_positions_filled (FirmState) ->
+
+evolve_wage_rate(FirmState, SimState) ->
+	WageGrowthRateUniformDistributionUpperSupport = sim_state:get_value(wage_growth_rate_uniform_distribution_upper_support, SimState),
+    Mu = numerics:uniform(WageGrowthRateUniformDistributionUpperSupport),
+    EvolvedNumConsecutiveMonthsWithAllPositionsFilled = evolve_num_consecutive_months_with_all_positions_filled(FirmState),
+	[WorkPositionHasBeenOffered, WorkPositionHasBeenAccepted, WageRate, NumConsecutiveMonthsWithAllPositionsFilled] = 
+		firm_state:get_values([work_position_has_been_offered, work_position_has_been_accepted, wage_rate_f, num_consecutive_months_all_work_positions_filled], FirmState),
+    if
+		(WorkPositionHasBeenOffered == true) and (WorkPositionHasBeenAccepted == false) -> 
+			WageRate * (1.0 + Mu);%increase wage rate
+		EvolvedNumConsecutiveMonthsWithAllPositionsFilled >= NumConsecutiveMonthsWithAllPositionsFilled ->          
+			WageRate * (1.0 - Mu);%decrease wage rate
+		true ->
+			WageRate %do not change wage rate	 
+	end.
+	
+evolve_num_consecutive_months_with_all_positions_filled(FirmState) ->
+	 [NumWorkPositionsFilled, NumWorkPositionsAvailable, NumConsecutiveMonthsWithAllWorkPositionsFilled] = 
+		firm_state:get_values(num_work_positions_filled, num_work_positions_available, num_consecutive_months_all_work_positions_filled, FirmState),
      if 
-		FirmState#firm_state.num_work_positions_filled == FirmState#firm_state.num_work_positions_available ->
-			FirmState#firm_state.num_consecutive_months_all_work_positions_filled + 1;
+		NumWorkPositionsFilled == NumWorkPositionsAvailable ->
+			NumConsecutiveMonthsWithAllWorkPositionsFilled + 1;
 		true ->
 			0
-	 end.
-	 
-evolve_wage_rate(FirmState) ->
-    Mu = numerics:uniform(FirmState#firm_state.sim_configuration#sim_state.wage_growth_rate_uniform_distribution_upper_support),
-    EvolvedConsecutiveMonthsWithAllPositionsFilled = evolve_num_consecutive_months_with_all_positions_filled(FirmState),
-    if
-		(FirmState#firm_state.work_position_has_been_offered == true) and (FirmState#firm_state.work_position_has_been_accepted == false) -> 
-			FirmState#firm_state.wage_rate_f * (1.0 + Mu);%increase wage rate
-		EvolvedConsecutiveMonthsWithAllPositionsFilled >= FirmState#firm_state.num_consecutive_months_all_work_positions_filled ->          
-			FirmState#firm_state.wage_rate_f * (1.0 - Mu);%decrease wage rate
-		true ->
-			FirmState#firm_state.wage_rate_f %do not change wage rate	 
-	end.
+	 end.	
 	
 inventory_lower_upper_limits(FirmState) ->
     {
@@ -109,6 +118,8 @@ evolve_price(FirmState) ->
 		true ->
 			FirmState#firm_state.price_f
 	end.
+	
+	
 	
 % ---------------
 % DAILY EVOLUTION

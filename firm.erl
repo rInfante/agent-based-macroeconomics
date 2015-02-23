@@ -22,10 +22,10 @@ start_link(FirmState) ->
 
 first_day_of_month(FirmId, MonthNumber, SimState) ->
 	io:format("Processing first day of month: ~w for firm id:~w~n",[MonthNumber, FirmId]),
-	evolve_wage_rate(FirmId).
+	evolve_wage_rate(FirmId, SimState).
 daily_step(FirmId, DayNumber, SimState) ->
 	io:format("Processing day ~w for firm id:~w~n",[DayNumber, FirmId]),
-	increase_inventory(FirmId, SimState).	
+	increase_inventory(FirmId, SimState).	%%TODO: CHECK IF NEEDED
 last_day_of_month(FirmId, MonthNumber, SimState) ->
 	io:format("Processing last day of month: ~w for firm id:~w~n",[MonthNumber, FirmId]).
 	
@@ -41,7 +41,7 @@ get_fsm_values(Args, FirmId) ->
 increase_inventory(FirmId, SimState) ->
 	io:format("Increasing inventory_f of instance ~w. ~n",[FirmId]),
 	gen_fsm:send_event(firm_state:firm_id_to_atom(FirmId), {increase_inventory, SimState}).
-evolve_wage_rate(FirmId) ->
+evolve_wage_rate(FirmId, SimState) ->
 	io:format("Evolving wage_rate_f of instance ~w. ~n",[FirmId]),
 	gen_fsm:send_event(firm_state:firm_id_to_atom(FirmId), evolve_wage_rate).
 
@@ -63,10 +63,11 @@ normal(Event, State) ->
 			NewInventory = Inventory + NumWorkPositionsAvailable * TechnologyProductivityParameter,
 			io:format("Firm id:~w is increasing inventory_f from ~w to ~w~n",[FirmId, Inventory, NewInventory]),			
 			{next_state, normal, State#firm_state{inventory_f=NewInventory}, 10000};
-		evolve_wage_rate ->
+		{evolve_wage_rate, SimState} ->
 			WageRate = firm_state:get_value(wage_rate_f, State),
-			NewWageRate = firm_evolution:evolve_wage_rate(State),
-			io:format("Firm id:~w is changing wage_rate_f from ~w to ~w~n",[FirmId, WageRate, NewWageRate]),			
+			NewWageRate = firm_evolution:evolve_wage_rate(State, SimState),
+			io:format("Firm id:~w is changing wage_rate_f from ~w to ~w~n",[FirmId, WageRate, NewWageRate]),
+			%We do not increase the dalary of the current employees
 			{next_state, normal, State#firm_state{wage_rate_f=NewWageRate}, 10000};			
 		timeout ->
 			io:format("Nothing has happened to NORMAL firm id:~w...~n",[FirmId]),
