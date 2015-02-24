@@ -1,5 +1,7 @@
 -module(numerics).
--export([uniform/1, is_happening_with_probability/1, percent_difference/2, list_average/1]).
+-export([uniform/1, is_happening_with_probability/1, 
+	increase/2, decrease/2,
+	percent_difference/2, list_average/1]).
 
 %Delta is between 0.0 and 1.0
 uniform(Delta) -> 
@@ -14,6 +16,11 @@ is_happening_with_probability(Probability) ->
 		true ->
 			false
 	end.
+	
+increase(Value, Factor) ->
+	Value * (1.0 + Factor).
+decrease(Value, Factor) ->
+	Value * (1.0 - Factor).	
 
 %CHECK THIS!
 %Number1 and Number2 are between 0.0 and 1.0

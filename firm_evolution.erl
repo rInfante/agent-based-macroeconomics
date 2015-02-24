@@ -1,11 +1,11 @@
 -module(firm_evolution).
 
 -export([evolve_wage_rate/2,
-			inventory_lower_upper_limits/1, evolve_work_position_has_been_offered/1,
-			evolve_num_work_positions/1, evolve_fired_employee_id/1,
+			inventory_lower_upper_limits/2, evolve_work_position_has_been_offered/2,
+			evolve_num_work_positions/2, evolve_fired_employee_id/2,
 			evolve_work_position_has_been_accepted/1, evolve_num_work_positions_filled/1,
-			price_lower_upper_limits/1, evolve_price/1,
-			evolve_inventory/1, evolve_liquidity_for_salary/1
+			price_lower_upper_limits/2, evolve_price/2,
+			evolve_inventory/2, evolve_liquidity_for_salary/1
 			]).
 
 %DEBUG			
@@ -17,6 +17,7 @@
 % FIRST DAY OF THE MONTH
 % ---------------------
 
+%%--
 evolve_wage_rate(FirmState, SimState) ->
 	WageGrowthRateUniformDistributionUpperSupport = sim_state:get_value(wage_growth_rate_uniform_distribution_upper_support, SimState),
     Mu = numerics:uniform(WageGrowthRateUniformDistributionUpperSupport),
@@ -25,55 +26,62 @@ evolve_wage_rate(FirmState, SimState) ->
 		firm_state:get_values([work_position_has_been_offered, work_position_has_been_accepted, wage_rate_f, num_consecutive_months_all_work_positions_filled], FirmState),
     if
 		(WorkPositionHasBeenOffered == true) and (WorkPositionHasBeenAccepted == false) -> 
-			WageRate * (1.0 + Mu);%increase wage rate
+			numerics:increase(WageRate, Mu);
 		EvolvedNumConsecutiveMonthsWithAllPositionsFilled >= NumConsecutiveMonthsWithAllPositionsFilled ->          
-			WageRate * (1.0 - Mu);%decrease wage rate
+			numerics:decrease(WageRate,Mu);
 		true ->
 			WageRate %do not change wage rate	 
 	end.
 	
 evolve_num_consecutive_months_with_all_positions_filled(FirmState) ->
 	 [NumWorkPositionsFilled, NumWorkPositionsAvailable, NumConsecutiveMonthsWithAllWorkPositionsFilled] = 
-		firm_state:get_values(num_work_positions_filled, num_work_positions_available, num_consecutive_months_all_work_positions_filled, FirmState),
+		firm_state:get_values([num_work_positions_filled, num_work_positions_available, num_consecutive_months_all_work_positions_filled], FirmState),
      if 
 		NumWorkPositionsFilled == NumWorkPositionsAvailable ->
 			NumConsecutiveMonthsWithAllWorkPositionsFilled + 1;
 		true ->
 			0
-	 end.	
+	 end.
+
+%%--	 
 	
-inventory_lower_upper_limits(FirmState) ->
+inventory_lower_upper_limits(FirmState, SimState) ->
+	[InventoryLowerLimitRatio, InventoryUpperLimitRatio] = sim_state:get_values([inventory_lower_limit_ratio, inventory_upper_limit_ratio], SimState),
+	MonthlyDemandOfConsumptionGoods = firm_state:get_value(monthly_demand_of_consumption_goods, FirmState),
     {
-       FirmState#firm_state.sim_configuration#sim_state.inventory_lower_limit_ratio * FirmState#firm_state.monthly_demand_of_consumption_goods, 
-       FirmState#firm_state.sim_configuration#sim_state.price_upper_limit_ratio * FirmState#firm_state.monthly_demand_of_consumption_goods
+       InventoryLowerLimitRatio * MonthlyDemandOfConsumptionGoods, 
+       InventoryUpperLimitRatio * MonthlyDemandOfConsumptionGoods
     }.
 	
-evolve_work_position_has_been_offered(FirmState) ->
-    {InventoryLowerLimit, _} = inventory_lower_upper_limits(FirmState), 
+evolve_work_position_has_been_offered(FirmState, SimState) ->
+    {InventoryLowerLimit, _} = inventory_lower_upper_limits(FirmState, SimState), 
+	Inventory = firm_state:get_value(inventory_f, FirmState),
     if 
-		FirmState#firm_state.inventory_f < InventoryLowerLimit -> 
+		Inventory < InventoryLowerLimit -> 
 			true;
 		true -> 
 			false	
 	end.
 	
-evolve_num_work_positions(FirmState) -> 
-    {InventoryLowerLimit, InventoryUpperLimit} = inventory_lower_upper_limits(FirmState),
+evolve_num_work_positions(FirmState, SimState) -> 
+    {InventoryLowerLimit, InventoryUpperLimit} = inventory_lower_upper_limits(FirmState, SimState),
+	[Inventory, NumWorkPositionsAvailable] = firm_state:get_values([inventory_f, num_work_positions_available], FirmState),
 	if
-		FirmState#firm_state.inventory_f < InventoryLowerLimit ->
-			FirmState#firm_state.num_work_positions_available + 1;
-		FirmState#firm_state.inventory_f > InventoryUpperLimit ->	
-			FirmState#firm_state.num_work_positions_available - 1;
+		Inventory < InventoryLowerLimit ->
+			NumWorkPositionsAvailable + 1;%%TODO: should do -1 instead?
+		Inventory > InventoryUpperLimit ->	
 			%TODO: SACK ONE OF THE EMPLOYEES 
+			NumWorkPositionsAvailable - 1;%%TODO: should do +1 instead?			
 		true ->
-			FirmState#firm_state.num_work_positions_available	
+			NumWorkPositionsAvailable	
 	end.
 	
-evolve_fired_employee_id(FirmState) ->
-    {_, InventoryUpperLimit} = inventory_lower_upper_limits(FirmState),
+evolve_fired_employee_id(FirmState, SimState) ->
+    {_, InventoryUpperLimit} = inventory_lower_upper_limits(FirmState, SimState),
+	[Inventory, EmployeeIds] = firm_state:get_values([inventory_f, employee_ids], FirmState),
 	if
-		FirmState#firm_state.inventory_f > InventoryUpperLimit ->
-			item_selection:choose_random_item(FirmState#firm_state.employee_ids); 
+		Inventory > InventoryUpperLimit ->
+			item_selection:choose_random_item(EmployeeIds); 
 		true ->
 			0 %employee_id = 0 means no employee has been fired	
 	end.
@@ -84,39 +92,44 @@ evolve_work_position_has_been_accepted(FirmState) ->
 evolve_num_work_positions_filled(FirmState) ->
     FirmState#firm_state.num_work_positions_filled. %TODO:this is actually modified in "evolve household" function	
 	
-price_lower_upper_limits(FirmState) ->
+price_lower_upper_limits(FirmState, SimState) ->
+	[PriceLowerLimitRatio, PriceUpperLimitRatio] = sim_state:get_values([price_lower_limit_ratio, price_upper_limit_ratio], SimState),
+	MonthlyMarginalCosts = firm_state:get_value(monthly_marginal_costs, FirmState),
     {
-       FirmState#firm_state.sim_configuration#sim_state.price_lower_limit_ratio * FirmState#firm_state.monthly_marginal_costs, 
-       FirmState#firm_state.sim_configuration#sim_state.price_upper_limit_ratio * FirmState#firm_state.monthly_marginal_costs
+       PriceLowerLimitRatio * MonthlyMarginalCosts, 
+       PriceUpperLimitRatio * MonthlyMarginalCosts
     }.  
 	
-evolve_price(FirmState) ->
-	Ni = numerics:uniform(FirmState#firm_state.sim_configuration#sim_state.price_growth_rate_uniform_distribution_upper_support),
-	{InventoryLowerLimit, InventoryUpperLimit} = inventory_lower_upper_limits(FirmState),
-	{PriceLowerLimit, PriceUpperLimit} = price_lower_upper_limits(FirmState),
+evolve_price(FirmState, SimState) ->
+	[PriceGrowthRateUniformDistributionUpperSupport, ProbabilityOfSettingNewPrice] = 
+		sim_state:get_values([price_growth_rate_uniform_distribution_upper_support, probability_of_setting_new_price], SimState),
+	[Inventory, Price] = firm_state:get_values([inventory_f, price_f], FirmState),
+	Ni = numerics:uniform(PriceGrowthRateUniformDistributionUpperSupport),
+	{InventoryLowerLimit, InventoryUpperLimit} = inventory_lower_upper_limits(FirmState, SimState),
+	{PriceLowerLimit, PriceUpperLimit} = price_lower_upper_limits(FirmState, SimState),
 	if 
-		FirmState#firm_state.inventory_f < InventoryLowerLimit ->
+		Inventory < InventoryLowerLimit ->
 			if 
-				FirmState#firm_state.price_f < PriceUpperLimit ->
-					case numerics:is_happening_with_probability(FirmState#firm_state.sim_configuration#sim_state.probability_of_setting_new_price) of
-						true -> (1.0 + Ni) * FirmState#firm_state.price_f;
-						false -> FirmState#firm_state.price_f
+				Price < PriceUpperLimit ->
+					case numerics:is_happening_with_probability(ProbabilityOfSettingNewPrice) of
+						true ->  numerics:increase(Price, Ni);
+						false -> Price
 					end;
 				true ->
-					FirmState#firm_state.price_f
+					Price
 			end;
-		FirmState#firm_state.inventory_f > InventoryUpperLimit ->
+		Inventory > InventoryUpperLimit ->
 			if 
-				FirmState#firm_state.price_f < PriceLowerLimit ->
-					case numerics:is_happening_with_probability(FirmState#firm_state.sim_configuration#sim_state.probability_of_setting_new_price) of
-						true -> (1.0 - Ni) * FirmState#firm_state.price_f;
-						false -> FirmState#firm_state.price_f
+				Price < PriceLowerLimit ->
+					case numerics:is_happening_with_probability(ProbabilityOfSettingNewPrice) of
+						true -> numerics:decrease(Price, Ni);
+						false -> Price
 					end;
 				true ->
-					FirmState#firm_state.price_f
+					Price
 			end;
 		true ->
-			FirmState#firm_state.price_f
+			Price
 	end.
 	
 	
@@ -124,23 +137,24 @@ evolve_price(FirmState) ->
 % ---------------
 % DAILY EVOLUTION
 % ---------------
-evolve_inventory(FirmState) ->
-    FirmState#firm_state.inventory_f + 
-	FirmState#firm_state.sim_configuration#sim_state.technology_productivity_parameter * (length(FirmState#firm_state.employee_ids)).
+evolve_inventory(FirmState, SimState) ->
+	TechnologyProductivityParameter = sim_state:get_value(technology_productivity_parameter, SimState),
+	[Inventory, EmployeeIds] = firm_state:get_values([inventory_f, employee_ids], FirmState),
+    Inventory + TechnologyProductivityParameter * (length(EmployeeIds)).
 	
 % ---------------------
 % LAST DAY OF THE MONTH
 % ---------------------
 evolve_liquidity_for_salary(FirmState) ->
-    PaidSalaries = (length(FirmState#firm_state.employee_ids)) * FirmState#firm_state.wage_rate_f,
-	FirmLiquidity = FirmState#firm_state.liquidity_f,
+	[EmployeeIds, WageRate, FirmLiquidity] = firm_state:get_values([employee_ids, wage_rate_f, liquidity_f], FirmState),
+    PaidSalaries = (length(EmployeeIds)) * WageRate,
     if 
-		(FirmLiquidity > PaidSalaries) ->
-			FirmLiquidity - PaidSalaries;
+		FirmLiquidity > PaidSalaries ->			
 			%TODO: should redistribute profits to household proportionally to their wealth
-		(FirmLiquidity < paidSalaries) ->
-			0.0;
+			FirmLiquidity - PaidSalaries;
+		FirmLiquidity < paidSalaries ->
 			%TODO: we should redistribute debt among households
+			0.0;			
 		true ->
 			0.0
 	end.
