@@ -24,7 +24,8 @@ first_day_of_month(FirmId, MonthNumber, SimState) ->
 	io:format("Processing first day of month: ~w for firm id:~w~n",[MonthNumber, FirmId]),
 	evolve_num_consecutive_months_with_all_positions_filled(FirmId),
 	evolve_wage_rate(FirmId, SimState),
-	evolve_work_positions(FirmId, SimState).
+	evolve_work_positions(FirmId, SimState),
+	evolve_goods_price(FirmId, SimState).
 daily_step(FirmId, DayNumber, SimState) ->
 	io:format("Processing day ~w for firm id:~w~n",[DayNumber, FirmId]),
 	increase_inventory(FirmId, SimState).	%%TODO: CHECK IF NEEDED
@@ -52,6 +53,9 @@ evolve_wage_rate(FirmId, SimState) ->
 evolve_work_positions(FirmId, SimState) ->	
 	io:format("Evolving work num_work_positions_available of instance ~w. ~n",[FirmId]),
 	gen_fsm:send_event(firm_state:firm_id_to_atom(FirmId), {evolve_work_positions, SimState}).
+evolve_goods_price(FirmId, SimState) ->	
+	io:format("Evolving work price_f of instance ~w. ~n",[FirmId]),
+	gen_fsm:send_event(firm_state:firm_id_to_atom(FirmId), {evolve_goods_price, SimState}).	
 	
 %GEN_FSM CALLBACKS
 init(State) ->
@@ -90,8 +94,13 @@ normal(Event, State) ->
 			NewNumWorkPositionsAvailable = firm_evolution:evolve_num_work_positions(State, SimState),
 			io:format("Firm id:~w is changing work_position_has_been_offered from ~w to ~w; fired_employee_id from ~w to ~w; num_work_positions_available from ~w to ~w ~n",
 				[FirmId, WorkPositionHasBeenOffered, NewWorkPositionHasBeenOffered, FiredEmployeeId, NewFiredEmployeeId, NumWorkPositionsAvailable, NewNumWorkPositionsAvailable]),
-			household:fire_employeee(NewFiredEmployeeId),%%PUT IF CONDITION ON NewFiredEmployeeId /= 0 AND RETURN A VALUE EVEN IF NOT NEEDED
-			{next_state, normal, State#firm_state{work_position_has_been_offered=NewWorkPositionHasBeenOffered, fired_employee_id=NewFiredEmployeeId, num_work_positions_available=NewNumWorkPositionsAvailable}, 10000};	
+			household:fire_employeee(NewFiredEmployeeId),%%TODO: PUT IF CONDITION ON NewFiredEmployeeId /= 0 AND RETURN A VALUE EVEN IF NOT NEEDED
+			{next_state, normal, State#firm_state{work_position_has_been_offered=NewWorkPositionHasBeenOffered, fired_employee_id=NewFiredEmployeeId, num_work_positions_available=NewNumWorkPositionsAvailable}, 10000};
+		{evolve_goods_price, SimState} ->		
+			Price = firm_state:get_value(price_f, State),
+			NewPrice = firm_evolution:evolve_price(State, SimState),
+			io:format("Firm id:~w is changing price_f from ~w to ~w~n",[FirmId, Price, NewPrice]),			
+			{next_state, normal, State#firm_state{price_f=NewPrice}, 10000};	
 		timeout ->
 			io:format("Nothing has happened to NORMAL firm id:~w...~n",[FirmId]),
 			{next_state, normal, State, 10000};

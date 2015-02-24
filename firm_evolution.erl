@@ -108,20 +108,14 @@ evolve_price(FirmState, SimState) ->
 		Inventory < InventoryLowerLimit ->
 			if 
 				Price < PriceUpperLimit ->
-					case numerics:is_happening_with_probability(ProbabilityOfSettingNewPrice) of
-						true ->  numerics:increase(Price, Ni);
-						false -> Price
-					end;
+					numerics:increase_with_probability(ProbabilityOfSettingNewPrice, Price, Ni);
 				true ->
 					Price
 			end;
 		Inventory > InventoryUpperLimit ->
 			if 
-				Price < PriceLowerLimit ->
-					case numerics:is_happening_with_probability(ProbabilityOfSettingNewPrice) of
-						true -> numerics:decrease(Price, Ni);
-						false -> Price
-					end;
+				Price > PriceLowerLimit ->
+					numerics:decrease_with_probability(ProbabilityOfSettingNewPrice, Price, Ni);
 				true ->
 					Price
 			end;

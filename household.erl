@@ -61,7 +61,7 @@ normal(Event, State) ->
 			io:format("Household ~w is spending ~w; Liquidity gone from: ~w to: ~w~n",[HouseholdId, Expenditure, State#household_state.liquidity_h, NewLiquidity]),			
 			{next_state, normal, State#household_state{liquidity_h=NewLiquidity}, 10000};
 		fire_employee ->
-			{next_state, normal, #household_state{employer_firm_id=0}, 1000};%TODO: actually fire after one month // TODO: also change state??
+			{next_state, normal, #household_state{employer_firm_id=0}, 1000};%%TODO: CHECK COMMUNICATION\\TODO: actually fire after one month // TODO: also change state to fired??
 		timeout ->
 			io:format("Nothing has happened to NORMAL household id:~w...~n",[HouseholdId]),
 			{next_state, normal, State, 10000};
