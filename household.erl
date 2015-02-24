@@ -26,6 +26,10 @@ first_day_of_month(HouseholdId, MonthNumber, SimState) ->
 	io:format("Processing first day of month: ~w for household id: ~w~n",[MonthNumber, HouseholdId]).
 last_day_of_month(HouseholdId, MonthNumber, SimState) ->
 	io:format("Processing last day of month: ~w for household id: ~w~n",[MonthNumber, HouseholdId]).
+	
+fire_employee(HouseholdId) ->
+	io:format("Firing employee with Id: ~w~n",[HouseholdId]),
+	gen_fsm:send_event(household_state:household_id_to_atom(HouseholdId), fire_employee). %We do not care about return value
 
 %Private functions
 spend(HouseholdId, SimState) -> %%TODO: REMOVE THIS
@@ -56,6 +60,8 @@ normal(Event, State) ->
 			NewLiquidity = State#household_state.liquidity_h-Expenditure,
 			io:format("Household ~w is spending ~w; Liquidity gone from: ~w to: ~w~n",[HouseholdId, Expenditure, State#household_state.liquidity_h, NewLiquidity]),			
 			{next_state, normal, State#household_state{liquidity_h=NewLiquidity}, 10000};
+		fire_employee ->
+			{next_state, normal, #household_state{employer_firm_id=0}, 1000};%TODO: actually fire after one month // TODO: also change state??
 		timeout ->
 			io:format("Nothing has happened to NORMAL household id:~w...~n",[HouseholdId]),
 			{next_state, normal, State, 10000};
