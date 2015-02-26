@@ -87,15 +87,18 @@ normal(Event, State) ->
 			%We do not increase the salary of the current employees
 			{next_state, normal, State#firm_state{wage_rate_f=NewWageRate}, 10000};	
 		{evolve_work_positions, SimState} ->
-			[WorkPositionHasBeenOffered, FiredEmployeeId, NumWorkPositionsAvailable] = 
-				firm_state:get_values([work_position_has_been_offered, fired_employee_id, num_work_positions_available], State),
+			[WorkPositionHasBeenOffered, FiredEmployeeId, NumWorkPositionsAvailable, EmployeeIds] = 
+				firm_state:get_values([work_position_has_been_offered, fired_employee_id, num_work_positions_available, employee_ids], State),
 			NewWorkPositionHasBeenOffered = firm_evolution:evolve_work_position_has_been_offered(State, SimState),
 			NewFiredEmployeeId = firm_evolution:evolve_fired_employee_id(State, SimState),
 			NewNumWorkPositionsAvailable = firm_evolution:evolve_num_work_positions(State, SimState),
 			io:format("Firm id:~w is changing work_position_has_been_offered from ~w to ~w; fired_employee_id from ~w to ~w; num_work_positions_available from ~w to ~w ~n",
 				[FirmId, WorkPositionHasBeenOffered, NewWorkPositionHasBeenOffered, FiredEmployeeId, NewFiredEmployeeId, NumWorkPositionsAvailable, NewNumWorkPositionsAvailable]),
 			household:fire_employee(NewFiredEmployeeId),%%TODO: PUT IF CONDITION ON NewFiredEmployeeId /= 0 AND RETURN A VALUE EVEN IF NOT NEEDED
-			{next_state, normal, State#firm_state{work_position_has_been_offered=NewWorkPositionHasBeenOffered, fired_employee_id=NewFiredEmployeeId, num_work_positions_available=NewNumWorkPositionsAvailable}, 10000};
+			NewEmployeeIds = firm_evolution:evolve_employee_ids(EmployeeIds, NewFiredEmployeeId),
+			io:format("Firm id:~w is changing employee_ids from ~w to ~w~n",[FirmId, EmployeeIds, NewEmployeeIds]),
+			{next_state, normal, State#firm_state{work_position_has_been_offered=NewWorkPositionHasBeenOffered, fired_employee_id=NewFiredEmployeeId, 
+				num_work_positions_available=NewNumWorkPositionsAvailable, employee_ids=NewEmployeeIds}, 10000};
 		{evolve_goods_price, SimState} ->		
 			Price = firm_state:get_value(price_f, State),
 			NewPrice = firm_evolution:evolve_price(State, SimState),

@@ -44,9 +44,9 @@ normal(Event, State) ->
 			case is_first_day_of_month(StepNumber, DaysInOneMonth) of 
 				true ->
 					MonthNumber = 1 + (StepNumber div DaysInOneMonth),
-					io:format("This step is the first day of the month. Month number: ~w~n",[MonthNumber]),	
-					lists:foreach(fun(Id)->household:first_day_of_month(Id, MonthNumber, State) end, HouseholdIds), 
-					lists:foreach(fun(Id)->firm:first_day_of_month(Id, MonthNumber, State) end, FirmIds);					
+					io:format("This step is the first day of the month. Month number: ~w~n",[MonthNumber]),
+					lists:foreach(fun(Id)->firm:first_day_of_month(Id, MonthNumber, State) end, FirmIds),				
+					lists:foreach(fun(Id)->household:first_day_of_month(Id, MonthNumber, State) end, HouseholdIds);
 				false ->
 					io:format("This step is NOT the first day of the month.~n",[])
 			end,

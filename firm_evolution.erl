@@ -5,7 +5,8 @@
 			evolve_num_work_positions/2, evolve_fired_employee_id/2,
 			evolve_work_position_has_been_accepted/1, evolve_num_work_positions_filled/1,
 			price_lower_upper_limits/2, evolve_price/2,
-			evolve_inventory/2, evolve_liquidity_for_salary/1
+			evolve_inventory/2, evolve_liquidity_for_salary/1,
+			evolve_employee_ids/2
 			]).
 
 %DEBUG			
@@ -123,7 +124,8 @@ evolve_price(FirmState, SimState) ->
 			Price
 	end.
 	
-	
+evolve_employee_ids(CurrentEmployeeIds, FiredEmployeeIds) ->
+	lists:delete(FiredEmployeeIds, CurrentEmployeeIds).
 	
 % ---------------
 % DAILY EVOLUTION
