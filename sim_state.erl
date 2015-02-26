@@ -1,6 +1,6 @@
 -module(sim_state).
 
--export([get_value/2]).
+-export([get_value/2, get_values/2]).
 
 -include_lib("record_defs.hrl").
 
@@ -47,6 +47,10 @@ get_value(household_ids, SimState) ->
 get_value(firm_ids, SimState) ->
 	FirmToEmployeesLookup = SimState#sim_state.firm_employees_lookup,	
 	lists:map(fun({FirmId, _EmployeeIds}) ->FirmId end, FirmToEmployeesLookup).
+	
+%%TODO: This can be generalised	
+get_values(Args, SimState) ->
+	[get_value(Arg, SimState) || Arg <- Args].	
 
 %%TODO: REMOVE	
 %%FirmToEmployeesLookup = [{1, [11,12]}, {2, [21, 22, 23]}, {3, [31, 32]} , ...

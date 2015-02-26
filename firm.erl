@@ -76,9 +76,9 @@ normal(Event, State) ->
 			io:format("Firm id:~w is increasing inventory_f from ~w to ~w~n",[FirmId, Inventory, NewInventory]),			
 			{next_state, normal, State#firm_state{inventory_f=NewInventory}, 10000};
 		evolve_num_consecutive_months_with_all_positions_filled ->
-			NumConsecutiveMonthsWithAllPositionsFilled = firm_state:get_value(num_consecutive_months_with_all_positions_filled, State),
+			NumConsecutiveMonthsWithAllPositionsFilled = firm_state:get_value(num_consecutive_months_all_work_positions_filled, State),
 			NewNumConsecutiveMonthsWithAllPositionsFilled = firm_evolution:evolve_num_consecutive_months_with_all_positions_filled(State),
-			io:format("Firm id:~w is changing num_consecutive_months_with_all_positions_filled from ~w to ~w~n",[FirmId, NumConsecutiveMonthsWithAllPositionsFilled, NewNumConsecutiveMonthsWithAllPositionsFilled]),
+			io:format("Firm id:~w is changing num_consecutive_months_all_work_positions_filled from ~w to ~w~n",[FirmId, NumConsecutiveMonthsWithAllPositionsFilled, NewNumConsecutiveMonthsWithAllPositionsFilled]),
 			{next_state, normal, State#firm_state{num_consecutive_months_all_work_positions_filled=NewNumConsecutiveMonthsWithAllPositionsFilled}, 10000};	
 		{evolve_wage_rate, SimState} ->
 			WageRate = firm_state:get_value(wage_rate_f, State),
@@ -94,7 +94,7 @@ normal(Event, State) ->
 			NewNumWorkPositionsAvailable = firm_evolution:evolve_num_work_positions(State, SimState),
 			io:format("Firm id:~w is changing work_position_has_been_offered from ~w to ~w; fired_employee_id from ~w to ~w; num_work_positions_available from ~w to ~w ~n",
 				[FirmId, WorkPositionHasBeenOffered, NewWorkPositionHasBeenOffered, FiredEmployeeId, NewFiredEmployeeId, NumWorkPositionsAvailable, NewNumWorkPositionsAvailable]),
-			household:fire_employeee(NewFiredEmployeeId),%%TODO: PUT IF CONDITION ON NewFiredEmployeeId /= 0 AND RETURN A VALUE EVEN IF NOT NEEDED
+			household:fire_employee(NewFiredEmployeeId),%%TODO: PUT IF CONDITION ON NewFiredEmployeeId /= 0 AND RETURN A VALUE EVEN IF NOT NEEDED
 			{next_state, normal, State#firm_state{work_position_has_been_offered=NewWorkPositionHasBeenOffered, fired_employee_id=NewFiredEmployeeId, num_work_positions_available=NewNumWorkPositionsAvailable}, 10000};
 		{evolve_goods_price, SimState} ->		
 			Price = firm_state:get_value(price_f, State),

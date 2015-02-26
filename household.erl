@@ -2,7 +2,7 @@
 -behavior(gen_fsm).
 
 % public API
--export([start/1, start_link/1, daily_step/3, first_day_of_month/3, last_day_of_month/3]).
+-export([start/1, start_link/1, daily_step/3, first_day_of_month/3, last_day_of_month/3, fire_employee/1]).
 
 %% gen_fsm callbacks
 -export([init/1,
@@ -20,8 +20,8 @@ start_link(HouseholdState) ->
 
 %%FSM PUBLIC API FUNCTIONS
 daily_step(HouseholdId, DayNumber, SimState) ->
-	io:format("Processing day ~w for household id: ~w~n",[DayNumber, HouseholdId]),
-	spend(HouseholdId, SimState).%%TODO: REMOVE THIS
+	io:format("Processing day ~w for household id: ~w~n",[DayNumber, HouseholdId]).
+	%%TODO: REMOVE THIS%%spend(HouseholdId, SimState).%%TODO: REMOVE THIS
 first_day_of_month(HouseholdId, MonthNumber, SimState) ->
 	io:format("Processing first day of month: ~w for household id: ~w~n",[MonthNumber, HouseholdId]).
 last_day_of_month(HouseholdId, MonthNumber, SimState) ->
@@ -61,7 +61,8 @@ normal(Event, State) ->
 			io:format("Household ~w is spending ~w; Liquidity gone from: ~w to: ~w~n",[HouseholdId, Expenditure, State#household_state.liquidity_h, NewLiquidity]),			
 			{next_state, normal, State#household_state{liquidity_h=NewLiquidity}, 10000};
 		fire_employee ->
-			{next_state, normal, #household_state{employer_firm_id=0}, 1000};%%TODO: CHECK COMMUNICATION\\TODO: actually fire after one month // TODO: also change state to fired??
+			io:format("Household id:~w got employee just fired~n",[HouseholdId]),
+			{next_state, normal, #household_state{employer_firm_id=0}, 1000};%%TODO: CHECK COMMUNICATION\\TODO: actually fire after one month // TODO: also change state to fired?? (i.e.: a fired employee should no longer earn money)
 		timeout ->
 			io:format("Nothing has happened to NORMAL household id:~w...~n",[HouseholdId]),
 			{next_state, normal, State, 10000};

@@ -63,6 +63,7 @@ normal(Event, State) ->
 			lists:foreach(fun(Id)->firm:daily_step(Id, StepNumber, State) end, FirmIds), 
 			%TODO:here query all firms and households to regenerate household and firm tuple list containing all firm-household relationships
 			%then inject these into Sim state (sim_state record)
+			io:format("Simulation step: ~w COMPLETED~n",[StepNumber]),
 			{next_state, normal, State, 10000};
 		timeout ->
 			io:format("Nothing has happened in the simulator...~n"),
