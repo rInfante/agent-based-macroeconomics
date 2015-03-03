@@ -2,7 +2,7 @@
 -behavior(gen_fsm).
 
 % public API
--export([start/1, start_link/1, daily_step/3, first_day_of_month/3, last_day_of_month/3, get_fsm_value/2, get_fsm_values/2]).
+-export([start/1, start_link/1, daily_step/3, first_day_of_month/3, last_day_of_month/3, pay_salary/1, get_fsm_value/2, get_fsm_values/2]).
 
 %% gen_fsm callbacks
 -export([init/1,
@@ -31,6 +31,10 @@ daily_step(FirmId, DayNumber, SimState) ->
 	increase_inventory(FirmId, SimState).	%%TODO: CHECK IF NEEDED
 last_day_of_month(FirmId, MonthNumber, SimState) ->
 	io:format("Processing last day of month: ~w for firm id:~w~n",[MonthNumber, FirmId]).
+	
+pay_salary(FirmId) ->
+	io:format("Salary payment request to firm id:~w~n",[FirmId]),
+	gen_fsm:sync_send_event(FirmId, pay_salary).
 	
 get_fsm_value(Arg, FirmId) -> 
 	FirmState = gen_fsm:sync_send_event(FirmId, get_state),%%TODO: CHECK IF CORRECT!!! (Missing From?)
@@ -103,7 +107,7 @@ normal(Event, State) ->
 			Price = firm_state:get_value(price_f, State),
 			NewPrice = firm_evolution:evolve_price(State, SimState),
 			io:format("Firm id:~w is changing price_f from ~w to ~w~n",[FirmId, Price, NewPrice]),			
-			{next_state, normal, State#firm_state{price_f=NewPrice}, 10000};	
+			{next_state, normal, State#firm_state{price_f=NewPrice}, 10000};		
 		timeout ->
 			io:format("Nothing has happened to NORMAL firm id:~w...~n",[FirmId]),
 			{next_state, normal, State, 10000};
@@ -117,6 +121,13 @@ normal(Event, From, State) ->
 	case Event of
 		get_state ->
 			{reply, State, normal, State};
+		pay_salary ->
+			[Salary, Liquidity] = firm_state:get_values([wage_rate_f, liquidity_f], State),
+			NewLiquidity = case (Liquidity - Salary >= 0) of
+				true -> Liquidity - Salary;
+				false -> 0 %%TODO: what happens when liquidity goes to 0? change of state to bankrupt?
+			end ,
+			{reply, Salary, normal, State#firm_state{liquidity_f=NewLiquidity}};
 		timeout ->
 			io:format("Nothing has happened to NORMAL firm id:~w...~n",[FirmId]),
 			{next_state, normal, State, 10000};
