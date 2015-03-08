@@ -6,7 +6,9 @@
 			evolve_work_position_has_been_accepted/1, evolve_num_work_positions_filled/1,
 			price_lower_upper_limits/2, evolve_price/2,
 			evolve_inventory/2, evolve_liquidity_for_salary/1,
-			evolve_employee_ids/2
+			evolve_employee_ids/2,
+			
+			buy_goods/2
 			]).
 
 %DEBUG			
@@ -127,6 +129,14 @@ evolve_price(FirmState, SimState) ->
 evolve_employee_ids(CurrentEmployeeIds, FiredEmployeeIds) ->
 	lists:delete(FiredEmployeeIds, CurrentEmployeeIds).
 	
+pay_salary(FirmState) ->	
+	[Salary, Liquidity] = firm_state:get_values([wage_rate_f, liquidity_f], State),
+	NewLiquidity = case (Liquidity - Salary >= 0) of
+		true -> Liquidity - Salary;
+		false -> 0 %flor liquidity to 0%%TODO: what happens when liquidity goes to 0? change of state to bankrupt?
+	end ,	
+	NewLiquidity.
+	
 % ---------------
 % DAILY EVOLUTION
 % ---------------
@@ -134,6 +144,13 @@ evolve_inventory(FirmState, SimState) ->
 	TechnologyProductivityParameter = sim_state:get_value(technology_productivity_parameter, SimState),
 	[Inventory, EmployeeIds] = firm_state:get_values([inventory_f, employee_ids], FirmState),
     Inventory + TechnologyProductivityParameter * (length(EmployeeIds)).
+	
+buy_goods(FirmState, Quantity) ->
+	[Inventory, Price, Liquidity] = firm_state:get_values([inventory_f, price_f, liquidity_f], FirmState),
+	PurchaseCost = Quantity * Price,
+	NewInventory = Inventory - Quantity,
+	NewLiquidity = Liquidity + PurchaseCost,
+	[PurchaseCost, NewInventory, NewLiquidity].
 	
 % ---------------------
 % LAST DAY OF THE MONTH

@@ -6,7 +6,7 @@
 			evolve_employer_firm_id/2,
 			evolve_planned_monthly_consumption_expenditure/2,
 			
-			evolve_liquidity_daily/2,
+			evolve_liquidity_from_daily_purchases/2,
 			evolve_liquidity_from_salary/1,
 			evolve_claimed_wage_rate/2
 		]
@@ -135,7 +135,7 @@ evolve_planned_monthly_consumption_expenditure(HouseholdState, SimState) ->
 % DAILY EVOLUTION
 % ---------------
 	
-evolve_liquidity_daily(HouseholdState, SimState) ->
+evolve_liquidity_from_daily_purchases(HouseholdState, SimState) ->
     try_to_transact_with_provider_firms(HouseholdState, SimState).
 	
 try_to_transact_with_provider_firms(HouseholdState, SimState) ->
@@ -153,18 +153,18 @@ transact_with_provider_firm(AttemptCycle, MaxNumAttempts, PlannedDailyConsumptio
 	case (ChosenProviderFirmInventory > PlannedDailyConsumptionDemand)
 		  and (CurrentHouseholdAgentLiquidity >= ChosenProviderFirmPrice * PlannedDailyConsumptionDemand) of
 		true ->
-			%%TODO: send message to chosenProviderFirm to raise its liquidity by chosenProviderFirm.Price * plannedDailyConsumptionDemand and decrease inventory by plannedDailyConsumptionDemand
-			CurrentHouseholdAgentLiquidity - ChosenProviderFirmPrice * PlannedDailyConsumptionDemand;
+			PurchaseCost = firm:buy_goods(ChosenProviderFirmId, PlannedDailyConsumptionDemand),
+			CurrentHouseholdAgentLiquidity - PurchaseCost;
 		false ->
 			case (CurrentHouseholdAgentLiquidity < ChosenProviderFirmPrice * PlannedDailyConsumptionDemand) of
 				true ->
-					AdjustedDailyConsumptionDemand = CurrentHouseholdAgentLiquidity / ChosenProviderFirmPrice,
-					%%TODO: send message to chosenProviderFirm to raise its liquidity by chosenProviderFirm.Price * adjustedDailyConsumptionDemand and decrease inventory by adjustedDailyConsumptionDemand
-					CurrentHouseholdAgentLiquidity - ChosenProviderFirmPrice * AdjustedDailyConsumptionDemand; %%the result should be 0.0
+					AdjustedDailyConsumptionDemand = CurrentHouseholdAgentLiquidity div ChosenProviderFirmPrice,
+					PurchaseCost = firm:buy_goods(ChosenProviderFirmId, AdjustedDailyConsumptionDemand),
+					CurrentHouseholdAgentLiquidity - PurchaseCost; %%the result should be next to 0.0 but not exactly 0.0 (because we don't by half item)
 				false ->
 					AdjustedDailyConsumptionDemand = ChosenProviderFirmInventory,
-					%%TODO: send message to chosenProviderFirm to raise its liquidity by ChosenProviderFirmInventory * CurrentHouseholdAgentLiquidity and decrease inventory by chosenProviderFirm.Inventory (inventory should go down to 0)
-					AmendedHouseholdAgentLiquidity = CurrentHouseholdAgentLiquidity - ChosenProviderFirmInventory * AdjustedDailyConsumptionDemand,
+					PurchaseCost = firm:buy_goods(ChosenProviderFirmId, AdjustedDailyConsumptionDemand),
+					AmendedHouseholdAgentLiquidity = CurrentHouseholdAgentLiquidity - PurchaseCost,
 					case (AttemptCycle < MaxNumAttempts) of %%TODO add condition of CurrentHouseholdAgentLiquidity > 5% of agent.Liquidity							
 						true-> 
 							transact_with_provider_firm(AttemptCycle+1, MaxNumAttempts, PlannedDailyConsumptionDemand, AmendedHouseholdAgentLiquidity, HouseholdState);
@@ -173,6 +173,10 @@ transact_with_provider_firm(AttemptCycle, MaxNumAttempts, PlannedDailyConsumptio
 					end
 			end
 	end.
+
+% ----------------------
+% LAST DAY OF THE MONTH
+% ----------------------
 	
 evolve_liquidity_from_salary(HouseholdState) ->    
 	[EmployerFirmId, Liquidity] = household:get_values([employer_firm_id, liquidity_h], HouseholdState),	

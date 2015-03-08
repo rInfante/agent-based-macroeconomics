@@ -19,14 +19,16 @@ start_link(HouseholdState) ->
 	gen_fsm:start_link({local, household_state:get_value(household_id_as_atom, HouseholdState) }, ?MODULE, HouseholdState, []).
 
 %%FSM PUBLIC API FUNCTIONS
-daily_step(HouseholdId, DayNumber, SimState) ->
-	io:format("Processing day ~w for household id: ~w~n",[DayNumber, HouseholdId]).
-	%%TODO: REMOVE THIS%%spend(HouseholdId, SimState).%%TODO: REMOVE THIS
 first_day_of_month(HouseholdId, MonthNumber, SimState) ->
 	io:format("Processing first day of month: ~w for household id: ~w~n",[MonthNumber, HouseholdId]),
 	evolve_provider_firm_ids(HouseholdId, SimState),
 	evolve_employer_firm_id(HouseholdId, SimState),
 	evolve_planned_monthly_consumption_expenditure(HouseholdId, SimState).
+
+daily_step(HouseholdId, DayNumber, SimState) ->
+	io:format("Processing day ~w for household id: ~w~n",[DayNumber, HouseholdId]),
+	evolve_liquidity_from_daily_purchases(HouseholdId, SimState).
+	
 last_day_of_month(HouseholdId, MonthNumber, SimState) ->
 	io:format("Processing last day of month: ~w for household id: ~w~n",[MonthNumber, HouseholdId]).
 	
@@ -35,9 +37,6 @@ fire_employee(HouseholdId) ->
 	gen_fsm:send_event(household_state:household_id_to_atom(HouseholdId), fire_employee). %We do not care about return value
 
 %Private functions
-spend(HouseholdId, SimState) -> %%TODO: REMOVE THIS
-	io:format("performing a spend: ~n",[]),
-	gen_fsm:send_event(household_state:household_id_to_atom(HouseholdId), {spend, SimState}).
 payrise(HouseholdId, NewWage) -> %%TODO: REMOVE THIS?
 	io:format("giving a payrise to household. new wage: ~w~n",[NewWage]),
 	gen_fsm:send_event(household_state:household_id_to_atom(HouseholdId), {payrise,NewWage}).
@@ -50,6 +49,11 @@ evolve_employer_firm_id(HouseholdId, SimState) ->
 evolve_planned_monthly_consumption_expenditure(HouseholdId, SimState) ->
 	io:format("Evolving planned_monthly_consumption_expenditure for Household with Id: ~w. ~n",[HouseholdId]),
 	gen_fsm:send_event(household_state:household_id_to_atom(HouseholdId), {planned_monthly_consumption_expenditure, SimState}).		
+	
+evolve_liquidity_from_daily_purchases(HouseholdId, SimState) ->
+	io:format("Evolving liquidity_h for Household with Id: ~w. ~n",[HouseholdId]),
+	gen_fsm:send_event(household_state:household_id_to_atom(HouseholdId), {evolve_liquidity_from_daily_purchases, SimState}).
+	
 %GEN_FSM CALLBACKS
 init(State) ->
 	io:format("HOUSEHOLD_FSM initialising household_state with Id:~w, ReservationWageRate:~w, Liquidity:~w, Monthly Demand~w~n",
@@ -65,30 +69,32 @@ normal(Event, State) ->
 			CurrentWage = household_state:get_value(reservation_wage_rate_h, State),
 			io:format("Household id:~w got payrise... from ~w to ~w~n",[HouseholdId, CurrentWage, NewWage]),
 			{next_state, normal, #household_state{reservation_wage_rate_h=NewWage}, 1000};
-		{spend, SimState}-> %%TODO: REMOVE THIS
-			DaysInOneMonth = SimState#sim_state.days_in_one_month,
-			Expenditure = State#household_state.planned_monthly_consumption_expenditure/DaysInOneMonth,
-			NewLiquidity = State#household_state.liquidity_h-Expenditure,
-			io:format("Household ~w is spending ~w; Liquidity gone from: ~w to: ~w~n",[HouseholdId, Expenditure, State#household_state.liquidity_h, NewLiquidity]),			
-			{next_state, normal, State#household_state{liquidity_h=NewLiquidity}, 10000};
+
 		fire_employee ->
 			io:format("Household id:~w got employee just fired~n",[HouseholdId]),
 			{next_state, normal, #household_state{employer_firm_id=0}, 1000};%%TODO: CHECK COMMUNICATION\\TODO: actually fire after one month // TODO: also change state to fired?? (i.e.: a fired employee should no longer earn money)
+			
 		{evolve_provider_firm_ids, SimState} ->
 			ProviderFirmIds = household_state:get_value(provider_firms_ids, SimState),
-			NewProviderFirmIds = evolve_provider_firm_ids(State, SimState),
+			NewProviderFirmIds = household_evolution:evolve_provider_firm_ids(State, SimState),
 			io:format("Household id:~w is changing provider_firms_ids from ~w to ~w~n",[HouseholdId, ProviderFirmIds, NewProviderFirmIds]),
 			{next_state, normal, State#household_state{provider_firms_ids=NewProviderFirmIds}, 10000};
 		{evolve_employer_firm_id, SimState} ->
 			EmployerFirmId = household_state:get_value(employer_firm_id, SimState),
-			NewEmployerFirmId = evolve_employer_firm_id(State, SimState),
+			NewEmployerFirmId = household_evolution:evolve_employer_firm_id(State, SimState),
 			io:format("Household id:~w is changing evolve_employer_firm_id from ~w to ~w~n",[HouseholdId, EmployerFirmId, NewEmployerFirmId]),
 			{next_state, normal, State#household_state{employer_firm_id=NewEmployerFirmId}, 10000};			
 		{evolve_planned_monthly_consumption_expenditure, SimState} ->
 			PlannedMonthlyConsumptionExpenditure = household_state:get_value(planned_monthly_consumption_expenditure, SimState),
-			NewPlannedMonthlyConsumptionExpenditure = evolve_planned_monthly_consumption_expenditure(State, SimState),
+			NewPlannedMonthlyConsumptionExpenditure = household_evolution:evolve_planned_monthly_consumption_expenditure(State, SimState),
 			io:format("Household id:~w is changing evolve_planned_monthly_consumption_expenditure from ~w to ~w~n",[HouseholdId, PlannedMonthlyConsumptionExpenditure, NewPlannedMonthlyConsumptionExpenditure]),
-			{next_state, normal, State#household_state{evolve_planned_monthly_consumption_expenditure=NewPlannedMonthlyConsumptionExpenditure}, 10000};
+			{next_state, normal, State#household_state{planned_monthly_consumption_expenditure=NewPlannedMonthlyConsumptionExpenditure}, 10000};
+			
+		{evolve_liquidity_from_daily_purchases, SimState}-> 
+			Liquidity = household_state:get_value(liquidity_h, SimState),
+			NewLiquidity = household_evolution:evolve_liquidity_from_daily_purchases(State, SimState),
+			io:format("Household id:~w is changing liquidity_h from ~w to ~w~n",[HouseholdId, Liquidity, NewLiquidity]),
+			{next_state, normal, State#household_state{liquidity_h=NewLiquidity}, 10000};			
 		timeout ->
 			io:format("Nothing has happened to NORMAL household id:~w...~n",[HouseholdId]),
 			{next_state, normal, State, 10000};
