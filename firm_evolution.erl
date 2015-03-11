@@ -5,7 +5,7 @@
 			evolve_num_work_positions/2, evolve_fired_employee_id/2,
 			evolve_work_position_has_been_accepted/1, evolve_num_work_positions_filled/1,
 			price_lower_upper_limits/2, evolve_price/2,
-			evolve_inventory/2, evolve_liquidity_for_salary/1,
+			evolve_inventory/2, evolve_liquidity_from_paying_salaries/1,
 			evolve_employee_ids/2,
 			
 			buy_goods/2
@@ -129,14 +129,6 @@ evolve_price(FirmState, SimState) ->
 evolve_employee_ids(CurrentEmployeeIds, FiredEmployeeIds) ->
 	lists:delete(FiredEmployeeIds, CurrentEmployeeIds).
 	
-pay_salary(FirmState) ->	
-	[Salary, Liquidity] = firm_state:get_values([wage_rate_f, liquidity_f], State),
-	NewLiquidity = case (Liquidity - Salary >= 0) of
-		true -> Liquidity - Salary;
-		false -> 0 %flor liquidity to 0%%TODO: what happens when liquidity goes to 0? change of state to bankrupt?
-	end ,	
-	NewLiquidity.
-	
 % ---------------
 % DAILY EVOLUTION
 % ---------------
@@ -145,6 +137,7 @@ evolve_inventory(FirmState, SimState) ->
 	[Inventory, EmployeeIds] = firm_state:get_values([inventory_f, employee_ids], FirmState),
     Inventory + TechnologyProductivityParameter * (length(EmployeeIds)).
 	
+%called by a household
 buy_goods(FirmState, Quantity) ->
 	[Inventory, Price, Liquidity] = firm_state:get_values([inventory_f, price_f, liquidity_f], FirmState),
 	PurchaseCost = Quantity * Price,
@@ -155,16 +148,19 @@ buy_goods(FirmState, Quantity) ->
 % ---------------------
 % LAST DAY OF THE MONTH
 % ---------------------
-evolve_liquidity_for_salary(FirmState) ->
+
+evolve_liquidity_from_paying_salaries(FirmState) ->
 	[EmployeeIds, WageRate, FirmLiquidity] = firm_state:get_values([employee_ids, wage_rate_f, liquidity_f], FirmState),
-    PaidSalaries = (length(EmployeeIds)) * WageRate,
+	NumEmployees = length(EmployeeIds),
+    PaidSalaries = NumEmployees * WageRate,
+	lists:foreach(fun(EmployeeId)-> household:pay_salary(EmployeeId, WageRate) end, EmployeeIds),
     if 
-		FirmLiquidity > PaidSalaries ->			
-			%TODO: should redistribute profits to household proportionally to their wealth
-			FirmLiquidity - PaidSalaries;
-		FirmLiquidity < paidSalaries ->
-			%TODO: we should redistribute debt among households
-			0.0;			
+		FirmLiquidity /= PaidSalaries ->	
+			PnL = FirmLiquidity - PaidSalaries,
+			EmployeePnL = PnL / NumEmployees,
+			lists:foreach(fun(EmployeeId)-> household:pay_salary(EmployeeId, EmployeePnL) end, EmployeeIds),%redistribute profits or debts
+			%TODO: should actually redistribute profits or debts to households proportionally to their liquidity_h
+			0.0;	
 		true ->
 			0.0
 	end.

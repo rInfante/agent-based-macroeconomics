@@ -7,7 +7,7 @@
 			evolve_planned_monthly_consumption_expenditure/2,
 			
 			evolve_liquidity_from_daily_purchases/2,
-			evolve_liquidity_from_salary/1,
+			evolve_liquidity_from_receiving_salary/2,
 			evolve_claimed_wage_rate/2
 		]
  ).
@@ -177,10 +177,8 @@ transact_with_provider_firm(AttemptCycle, MaxNumAttempts, PlannedDailyConsumptio
 % ----------------------
 % LAST DAY OF THE MONTH
 % ----------------------
-	
-evolve_liquidity_from_salary(HouseholdState) ->    
-	[EmployerFirmId, Liquidity] = household:get_values([employer_firm_id, liquidity_h], HouseholdState),	
-	FirmWageRate = firm:pay_salary(EmployerFirmId),	
+evolve_liquidity_from_receiving_salary(HouseholdState, FirmWageRate) ->    
+	[Liquidity] = household:get_value(liquidity_h, HouseholdState),	
     Liquidity + FirmWageRate.
 
 evolve_claimed_wage_rate(HouseholdState, SimState) ->
