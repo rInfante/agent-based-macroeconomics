@@ -38,13 +38,13 @@ last_day_of_month(FirmId, MonthNumber, SimState) ->
 	
 buy_goods(FirmId, Quantity) ->
 	io:format("Requesting quantity ~w of goods to firm id:~w~n",[Quantity, FirmId]),
-	gen_fsm:sync_send_event(FirmId, {buy_goods, Quantity}).
+	gen_fsm:sync_send_event(firm_state:firm_id_to_atom(FirmId), {buy_goods, Quantity}).
 	
 get_fsm_value(Arg, FirmId) -> 
-	FirmState = gen_fsm:sync_send_event(FirmId, get_state),%%TODO: CHECK IF CORRECT!!! (Missing From?)
+	FirmState = gen_fsm:sync_send_event(firm_state:firm_id_to_atom(FirmId), get_state),
 	firm_state:get_value(Arg, FirmState).
 get_fsm_values(Args, FirmId) -> 
-	FirmState = gen_fsm:sync_send_event(FirmId, get_state),%%TODO: CHECK IF CORRECT!!! (Missing From?)
+	FirmState = gen_fsm:sync_send_event(firm_state:firm_id_to_atom(FirmId), get_state),
 	firm_state:get_values(Args, FirmState).	
 	
 %Private functions
@@ -112,16 +112,16 @@ normal(Event, State) ->
 			{next_state, normal, State#firm_state{price_f=NewPrice}, 10000};	
 			
 		{evolve_inventory, SimState} ->			
-			[Inventory] = firm_state:get_value(inventory_f, State),
+			Inventory = firm_state:get_value(inventory_f, State),
 			NewInventory = firm_evolution:evolve_inventory(State, SimState),
 			io:format("Firm id:~w is changing inventory_f from ~w to ~w~n",[FirmId, Inventory, NewInventory]),			
 			{next_state, normal, State#firm_state{inventory_f=NewInventory}, 10000};
 			
-		{evolve_liquidity_from_paying_salaries, SimState} ->			
-			[Liquidity] = firm_state:get_value(liquidity_f, State),
-			NewLiquidity = firm_evolution:evolve_liquidity_from_paying_salaries(State, SimState),
+		{evolve_liquidity_from_paying_salaries, _SimState} ->	
+			Liquidity = firm_state:get_value(liquidity_f, State),
+			NewLiquidity = firm_evolution:evolve_liquidity_from_paying_salaries(State),
 			io:format("Firm id:~w is paying salaries and changing liquidity_f from ~w to ~w~n",[FirmId, Liquidity, NewLiquidity]),			
-			{next_state, normal, State#firm_state{liquidity_f=NewLiquidity}, 10000};
+			{next_state, normal, State#firm_state{liquidity_f=NewLiquidity}, 10000};	
 			
 		timeout ->
 			io:format("Nothing has happened to NORMAL firm id:~w...~n",[FirmId]),
@@ -136,7 +136,6 @@ normal(Event, From, State) ->
 	case Event of
 		get_state ->
 			{reply, State, normal, State};
-
 		{buy_goods, Quantity} ->
 			[Inventory, Liquidity] = firm_state:get_values([inventory_f, liquidity_f], State),
 			[PurchaseCost, NewInventory, NewLiquidity] = firm_evolution:buy_goods(State, Quantity),

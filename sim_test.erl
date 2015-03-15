@@ -279,7 +279,7 @@ test() ->
 	{
 		household_id=13, 
 		reservation_wage_rate_h=800, %w_h
-		liquidity_h=5000, %m_h
+		liquidity_h=5100, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
 		provider_firms_ids=[1,2,3,4], %type A firms
 		employer_firm_id=5 % type B firm		
@@ -288,7 +288,7 @@ test() ->
 	{
 		household_id=14, 
 		reservation_wage_rate_h=800, %w_h
-		liquidity_h=5000, %m_h
+		liquidity_h=5200, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
 		provider_firms_ids=[2,3,4,5], %type A firms
 		employer_firm_id=5 % type B firm		
@@ -297,7 +297,7 @@ test() ->
 	{
 		household_id=15, 
 		reservation_wage_rate_h=800, %w_h
-		liquidity_h=5000, %m_h
+		liquidity_h=5300, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
 		provider_firms_ids=[3,4,5,6], %type A firms
 		employer_firm_id=7 % type B firm	
@@ -306,7 +306,7 @@ test() ->
 	{
 		household_id=16, 
 		reservation_wage_rate_h=800, %w_h
-		liquidity_h=5000, %m_h
+		liquidity_h=5400, %m_h
 		planned_monthly_consumption_expenditure=300, %c_r_h
 		provider_firms_ids=[5,6,7,8], %type A firms
 		employer_firm_id=8 % type B firm		

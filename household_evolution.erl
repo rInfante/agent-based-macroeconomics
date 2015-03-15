@@ -74,7 +74,7 @@ choose_random_provider_firm_id(HouseholdState) ->
 %%--
 
 evolve_employer_firm_id(HouseholdState, SimState) ->
-	[EmployerFirmId, HouseholdWageRate] = household:get_values([employer_firm_id, reservation_wage_rate_h], HouseholdState),
+	[EmployerFirmId, HouseholdWageRate] = household_state:get_values([employer_firm_id, reservation_wage_rate_h], HouseholdState),
 	[MaxNumberPotentialEmployersVisited, ProbabilityOfHouseholdPickingNewProviderFirm] = 
 		sim_state:get_values([max_number_potential_employers_visited, probability_of_household_picking_new_provider_firm], SimState),
 	if 
@@ -104,7 +104,7 @@ set_new_employer_firm(MaxNumAttempts, AttemptCycle, HouseholdState, SimState) ->
 	ChosenPotentialEmployerFirmId = choose_potential_employer_firm(SimState),
 	[WorkPositionHasBeenOffered, WorkPositionHasBeenAccepted, FirmWageRate] = 
 		firm:get_fsm_values([work_position_has_been_offered, work_position_has_been_accepted, wage_rate_f], ChosenPotentialEmployerFirmId),
-	[EmployerFirmId, HouseholdWageRate] = household:get_values([employer_firm_id, reservation_wage_rate_h], HouseholdState),
+	[EmployerFirmId, HouseholdWageRate] = household_state:get_values([employer_firm_id, reservation_wage_rate_h], HouseholdState),
 	if
 		WorkPositionHasBeenOffered and (not WorkPositionHasBeenAccepted) and FirmWageRate > HouseholdWageRate ->
 			ChosenPotentialEmployerFirmId;
@@ -141,7 +141,8 @@ evolve_liquidity_from_daily_purchases(HouseholdState, SimState) ->
 try_to_transact_with_provider_firms(HouseholdState, SimState) ->
 	[PlannedMonthlyConsumptionExpenditure, Liquidity] = household_state:get_values([planned_monthly_consumption_expenditure, liquidity_h], HouseholdState),
 	[DaysInOneMonth, MaxNumberProviderFirmsVisited] = 
-		sim_state:get_values([days_in_one_month, max_number_provider_firms_visited], SimState),		
+		sim_state:get_values([days_in_one_month, max_number_provider_firms_visited], SimState),
+    io:format("PlannedMonthlyConsumptionExpenditure: ~w | DaysInOneMonth: ~w~n", [PlannedMonthlyConsumptionExpenditure, DaysInOneMonth]),
 	PlannedDailyConsumptionDemand = PlannedMonthlyConsumptionExpenditure / DaysInOneMonth,
 	MaxNumAttempts = MaxNumberProviderFirmsVisited,
 	transact_with_provider_firm(1, MaxNumAttempts, PlannedDailyConsumptionDemand, Liquidity, HouseholdState).
@@ -178,12 +179,12 @@ transact_with_provider_firm(AttemptCycle, MaxNumAttempts, PlannedDailyConsumptio
 % LAST DAY OF THE MONTH
 % ----------------------
 evolve_liquidity_from_receiving_salary(HouseholdState, FirmWageRate) ->    
-	[Liquidity] = household:get_value(liquidity_h, HouseholdState),	
+	Liquidity = household_state:get_value(liquidity_h, HouseholdState),	
     Liquidity + FirmWageRate.
 
 evolve_claimed_wage_rate(HouseholdState, SimState) ->
 	ClaimedWageRatePercentageReductionIfUnemployed = sim_state:get_value(claimed_wage_rate_percentage_reduction_if_unemployed, SimState),
-	[EmployerFirmId, HouseholdWageRate] = household:get_values([employer_firm_id, reservation_wage_rate_h], HouseholdState),
+	[EmployerFirmId, HouseholdWageRate] = household_state:get_values([employer_firm_id, reservation_wage_rate_h], HouseholdState),
 	FirmWageRate = firm:get_fsm_value(wage_rate_f, EmployerFirmId),
 	case (EmployerFirmId == 0) of
 		true -> %%unemployed

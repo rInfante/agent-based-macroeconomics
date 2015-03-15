@@ -63,7 +63,7 @@ evolve_claimed_wage_rate(HouseholdId, SimState) ->
 	
 %GEN_FSM CALLBACKS
 init(State) ->
-	io:format("HOUSEHOLD_FSM initialising household_state with Id:~w, ReservationWageRate:~w, Liquidity:~w, Monthly Demand~w~n",
+	io:format("HOUSEHOLD_FSM initialising household_state with Id:~w, ReservationWageRate:~w, Liquidity:~w, Monthly Demand:~w~n",
 		household_state:get_values([household_id, reservation_wage_rate_h, liquidity_h, planned_monthly_consumption_expenditure], State)),	
 	{ok, normal, State, 2000}.
 
