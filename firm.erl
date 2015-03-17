@@ -100,7 +100,12 @@ normal(Event, State) ->
 			NewNumWorkPositionsAvailable = firm_evolution:evolve_num_work_positions(State, SimState),
 			io:format("Firm id:~w is changing work_position_has_been_offered from ~w to ~w; fired_employee_id from ~w to ~w; num_work_positions_available from ~w to ~w ~n",
 				[FirmId, WorkPositionHasBeenOffered, NewWorkPositionHasBeenOffered, FiredEmployeeId, NewFiredEmployeeId, NumWorkPositionsAvailable, NewNumWorkPositionsAvailable]),
-			household:fire_employee(NewFiredEmployeeId),%%TODO: PUT IF CONDITION ON NewFiredEmployeeId /= 0 AND RETURN A VALUE EVEN IF NOT NEEDED
+			if 
+				(NewFiredEmployeeId /= 0) ->
+					household:fire_employee(NewFiredEmployeeId);
+				true ->
+					io:format("Firm Id: ~w has not fired any employee", [FirmId])
+			end,
 			NewEmployeeIds = firm_evolution:evolve_employee_ids(EmployeeIds, NewFiredEmployeeId),
 			io:format("Firm id:~w is changing employee_ids from ~w to ~w~n",[FirmId, EmployeeIds, NewEmployeeIds]),
 			{next_state, normal, State#firm_state{work_position_has_been_offered=NewWorkPositionHasBeenOffered, fired_employee_id=NewFiredEmployeeId, 

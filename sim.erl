@@ -40,7 +40,7 @@ normal(Event, State) ->
 			DaysInOneMonth = sim_state:get_value(days_in_one_month, State),
 			HouseholdIds = sim_state:get_value(household_ids, State),
 			FirmIds = sim_state:get_value(firm_ids, State),
-			io:format("New simulation step: ~w~n",[StepNumber]),
+			io:format("New simulation step: ~w for Household Ids: ~w and Firm Ids:~w~n",[StepNumber, HouseholdIds, FirmIds]),
 			case is_first_day_of_month(StepNumber, DaysInOneMonth) of 
 				true ->
 					MonthNumber = 1 + (StepNumber div DaysInOneMonth),

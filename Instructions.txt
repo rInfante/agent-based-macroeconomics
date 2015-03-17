@@ -1,0 +1,1 @@
+error_logger:logfile({open, "errorlog.txt"}).
