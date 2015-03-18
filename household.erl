@@ -74,7 +74,7 @@ normal(Event, State) ->
 	case Event of
 		fire_employee ->
 			io:format("Household id:~w got employee just fired~n",[HouseholdId]),
-			{next_state, normal, State#household_state{employer_firm_id=0}, 1000};%%TODO: CHECK COMMUNICATION\\TODO: actually fire after one month // TODO: also change state to fired?? (i.e.: a fired employee should no longer earn money)
+			{next_state, normal, State#household_state{employer_firm_id=0}, 1000};%TODO: actually fire after one month // TODO: also change state to fired?? (i.e.: a fired employee should no longer earn money)
 			
 		{evolve_provider_firm_ids, SimState} ->
 			ProviderFirmIds = household_state:get_value(provider_firms_ids, State),

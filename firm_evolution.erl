@@ -87,10 +87,10 @@ evolve_num_work_positions(FirmState, SimState) ->
 	end.
 	
 evolve_work_position_has_been_accepted(FirmState) ->
-    FirmState#firm_state.work_position_has_been_accepted. %TODO:this is actually modified in "evolve household" function	
+    FirmState#firm_state.work_position_has_been_accepted. %TODO:this is actually called from "household_evolution.evolve_employer_firm_id" function	
 	
 evolve_num_work_positions_filled(FirmState) ->
-    FirmState#firm_state.num_work_positions_filled. %TODO:this is actually modified in "evolve household" function	
+    FirmState#firm_state.num_work_positions_filled. %TODO:this is actually called from  "household_evolution.evolve_employer_firm_id function	
 	
 price_lower_upper_limits(FirmState, SimState) ->
 	[PriceLowerLimitRatio, PriceUpperLimitRatio] = sim_state:get_values([price_lower_limit_ratio, price_upper_limit_ratio], SimState),

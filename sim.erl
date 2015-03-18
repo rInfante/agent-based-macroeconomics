@@ -61,10 +61,13 @@ normal(Event, State) ->
 			end,
 			lists:foreach(fun(Id)->household:daily_step(Id, StepNumber, State) end, HouseholdIds), 
 			lists:foreach(fun(Id)->firm:daily_step(Id, StepNumber, State) end, FirmIds), 
-			%TODO:here query all firms and households to regenerate household and firm tuple list containing all firm-household relationships
-			%then inject these into Sim state (sim_state record)
+			
+			FirmEmployeesLookup = sim_state:get_value(firm_employees_lookup, State),
+			NewFirmEmployeesLookup = lists:map(fun(Id)-> {Id, firm:get_fsm_value(employee_ids, Id)} end, FirmIds), 
+			io:format("Simulation firm_employees_lookup changed from ~w to ~w~n", [FirmEmployeesLookup, NewFirmEmployeesLookup]),
+
 			io:format("Simulation step: ~w COMPLETED~n",[StepNumber]),
-			{next_state, normal, State, 10000};
+			{next_state, normal, State#sim_state{firm_employees_lookup=NewFirmEmployeesLookup}, 10000};
 		timeout ->
 			io:format("Nothing has happened in the simulator...~n"),
 			{next_state, normal, State, 10000};

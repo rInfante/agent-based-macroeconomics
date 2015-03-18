@@ -19,7 +19,6 @@ start_link(FirmState) ->
 	gen_fsm:start_link({local, firm_state:get_value(firm_id_as_atom, FirmState)}, ?MODULE, FirmState, []).
 
 %%FSM PUBLIC API FUNCTIONS
-
 	
 first_day_of_month(FirmId, MonthNumber, SimState) ->
 	io:format("Processing first day of month: ~w for firm id:~w~n",[MonthNumber, FirmId]),
@@ -42,7 +41,9 @@ buy_goods(FirmId, Quantity) ->
 	
 get_fsm_value(Arg, FirmId) -> 
 	FirmState = gen_fsm:sync_send_event(firm_state:firm_id_to_atom(FirmId), get_state),
-	firm_state:get_value(Arg, FirmState).
+	Value=firm_state:get_value(Arg, FirmState),
+	io:format("The requested value from Firm Id: ~w of ~w is ~w~n",[FirmId, Arg, Value]),
+	Value.
 get_fsm_values(Args, FirmId) -> 
 	FirmState = gen_fsm:sync_send_event(firm_state:firm_id_to_atom(FirmId), get_state),
 	firm_state:get_values(Args, FirmState).	
