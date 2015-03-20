@@ -107,6 +107,7 @@ set_new_employer_firm(MaxNumAttempts, AttemptCycle, HouseholdState, SimState) ->
 	[EmployerFirmId, HouseholdWageRate] = household_state:get_values([employer_firm_id, reservation_wage_rate_h], HouseholdState),
 	if
 		WorkPositionHasBeenOffered and (not WorkPositionHasBeenAccepted) and FirmWageRate > HouseholdWageRate ->
+			firm:work_position_accepted(ChosenPotentialEmployerFirmId),
 			ChosenPotentialEmployerFirmId;
 		true ->
 			if

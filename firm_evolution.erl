@@ -3,7 +3,7 @@
 -export([	evolve_num_consecutive_months_with_all_positions_filled/1, evolve_wage_rate/2,
 			evolve_work_position_has_been_offered/2,
 			evolve_num_work_positions/2, evolve_fired_employee_id/2,
-			evolve_work_position_has_been_accepted/1, evolve_num_work_positions_filled/1,
+			evolve_work_positions_from_job_accepted/1,
 			price_lower_upper_limits/2, evolve_price/2,
 			evolve_inventory/2, evolve_liquidity_from_paying_salaries/1,
 			evolve_employee_ids/2,
@@ -68,7 +68,9 @@ evolve_fired_employee_id(FirmState, SimState) ->
 	[Inventory, EmployeeIds] = firm_state:get_values([inventory_f, employee_ids], FirmState),
 	if
 		Inventory > InventoryUpperLimit ->
-			item_selection:choose_random_item(EmployeeIds); 
+			FiredEmployeeId = item_selection:choose_random_item(EmployeeIds),
+			household:fire_employee(FiredEmployeeId),
+			FiredEmployeeId; 
 		true ->
 			0 %employee_id = 0 means no employee has been fired	
 	end.	
@@ -85,12 +87,12 @@ evolve_num_work_positions(FirmState, SimState) ->
 		true ->
 			NumWorkPositionsAvailable	
 	end.
-	
-evolve_work_position_has_been_accepted(FirmState) ->
-    FirmState#firm_state.work_position_has_been_accepted. %TODO:this is actually called from "household_evolution.evolve_employer_firm_id" function	
-	
-evolve_num_work_positions_filled(FirmState) ->
-    FirmState#firm_state.num_work_positions_filled. %TODO:this is actually called from  "household_evolution.evolve_employer_firm_id function	
+
+evolve_work_positions_from_job_accepted(FirmState) ->
+	NumWorkPositionsFilled = firm_state:get_value(num_work_positions_filled, FirmState),
+	NewWorkPositionHasBeenAccepted = true,
+	NewNumWorkPositionsFilled = NumWorkPositionsFilled + 1,
+	[NewWorkPositionHasBeenAccepted, NewNumWorkPositionsFilled].
 	
 price_lower_upper_limits(FirmState, SimState) ->
 	[PriceLowerLimitRatio, PriceUpperLimitRatio] = sim_state:get_values([price_lower_limit_ratio, price_upper_limit_ratio], SimState),

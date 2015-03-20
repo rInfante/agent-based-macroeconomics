@@ -2,7 +2,7 @@
 -behavior(gen_fsm).
 
 % public API
--export([start/1, start_link/1, daily_step/3, first_day_of_month/3, last_day_of_month/3, buy_goods/2, get_fsm_value/2, get_fsm_values/2]).
+-export([start/1, start_link/1, daily_step/3, first_day_of_month/3, last_day_of_month/3, buy_goods/2, work_position_accepted/1, get_fsm_value/2, get_fsm_values/2]).
 
 %% gen_fsm callbacks
 -export([init/1,
@@ -38,6 +38,10 @@ last_day_of_month(FirmId, MonthNumber, SimState) ->
 buy_goods(FirmId, Quantity) ->
 	io:format("Requesting quantity ~w of goods to firm id:~w~n",[Quantity, FirmId]),
 	gen_fsm:sync_send_event(firm_state:firm_id_to_atom(FirmId), {buy_goods, Quantity}).
+	
+work_position_accepted(FirmId) ->
+	io:format("Accepting job position in firm id:~w~n",[FirmId]),
+	gen_fsm:send_event(firm_state:firm_id_to_atom(FirmId), work_position_accepted). %We do not care about return value
 	
 get_fsm_value(Arg, FirmId) -> 
 	FirmState = gen_fsm:sync_send_event(firm_state:firm_id_to_atom(FirmId), get_state),
@@ -82,6 +86,12 @@ normal(Event, State) ->
 	io:format("Firm ~w state is NORMAL. Inventory:~w, Liquidity:~w, WageRate:~w, Price:~w, Number of Labourers:~w, Employee Ids:~w~n",
 		firm_state:get_values([firm_id, inventory_f, liquidity_f, wage_rate_f, price_f, num_work_positions_available, employee_ids], State)),	
 	case Event of
+		work_position_accepted ->
+			[WorkPositionHasBeenAccepted, NumWorkPositionFilled] = firm_state:get_values([work_position_has_been_accepted, num_work_positions_filled], State),
+			[NewWorkPositionHasBeenAccepted, NewNumWorkPositionFilled] = firm_evolution:evolve_work_positions_from_job_accepted(State),
+			io:format("Firm id:~w is changing work_position_has_been_accepted from ~w to ~w and num_work_positions_filled from ~w to ~w~n",
+				[FirmId, WorkPositionHasBeenAccepted, NewWorkPositionHasBeenAccepted, NumWorkPositionFilled, NewNumWorkPositionFilled]),
+			{next_state, normal, State#firm_state{work_position_has_been_accepted=NewWorkPositionHasBeenAccepted, num_work_positions_filled=NewNumWorkPositionFilled}, 10000};
 		evolve_num_consecutive_months_with_all_positions_filled ->
 			NumConsecutiveMonthsWithAllPositionsFilled = firm_state:get_value(num_consecutive_months_all_work_positions_filled, State),
 			NewNumConsecutiveMonthsWithAllPositionsFilled = firm_evolution:evolve_num_consecutive_months_with_all_positions_filled(State),
@@ -101,12 +111,6 @@ normal(Event, State) ->
 			NewNumWorkPositionsAvailable = firm_evolution:evolve_num_work_positions(State, SimState),
 			io:format("Firm id:~w is changing work_position_has_been_offered from ~w to ~w; fired_employee_id from ~w to ~w; num_work_positions_available from ~w to ~w ~n",
 				[FirmId, WorkPositionHasBeenOffered, NewWorkPositionHasBeenOffered, FiredEmployeeId, NewFiredEmployeeId, NumWorkPositionsAvailable, NewNumWorkPositionsAvailable]),
-			if 
-				(NewFiredEmployeeId /= 0) ->
-					household:fire_employee(NewFiredEmployeeId);
-				true ->
-					io:format("Firm Id: ~w has not fired any employee", [FirmId])
-			end,
 			NewEmployeeIds = firm_evolution:evolve_employee_ids(EmployeeIds, NewFiredEmployeeId),
 			io:format("Firm id:~w is changing employee_ids from ~w to ~w~n",[FirmId, EmployeeIds, NewEmployeeIds]),
 			{next_state, normal, State#firm_state{work_position_has_been_offered=NewWorkPositionHasBeenOffered, fired_employee_id=NewFiredEmployeeId, 
