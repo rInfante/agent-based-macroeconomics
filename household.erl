@@ -2,13 +2,13 @@
 -behavior(gen_fsm).
 
 % public API
--export([start/1, start_link/1, daily_step/3, first_day_of_month/3, last_day_of_month/3, fire_employee/1, pay_salary/2]).
+-export([start/1, start_link/1, daily_step/3, first_day_of_month/3, last_day_of_month/3, get_fsm_state/1, fire_employee/1, pay_salary/2]).
 
 %% gen_fsm callbacks
 -export([init/1,
 handle_event/3, handle_sync_event/4, handle_info/3,terminate/3, code_change/4,
 %%custom state names
-normal/2]).
+normal/2, normal/3]).
 
 -include_lib("record_defs.hrl").
 
@@ -32,6 +32,10 @@ daily_step(HouseholdId, DayNumber, SimState) ->
 last_day_of_month(HouseholdId, MonthNumber, SimState) ->
 	io:format("Processing last day of month: ~w for household id: ~w~n",[MonthNumber, HouseholdId]),
 	evolve_claimed_wage_rate(HouseholdId, SimState).
+	
+get_fsm_state(HouseholdId) ->
+	HouseholdState = gen_fsm:sync_send_event(household_state:firm_id_to_atom(HouseholdId), get_state),
+	HouseholdState.	
 	
 %Called by employer firm
 fire_employee(HouseholdId) ->
@@ -117,6 +121,19 @@ normal(Event, State) ->
 			io:format("Unknown event. Staying NORMAL.~n"),
 			{next_state, normal, State, 2000}
 	end.
+normal(Event, From, State) ->
+	HouseholdId = household_state:get_value(household_id, State),
+	io:format("An event has been sent from: ~w to Household Id: ~w~n",[From, HouseholdId]),
+	case Event of
+		get_state ->
+			{reply, State, normal, State};
+		timeout ->
+			io:format("Nothing has happened to NORMAL firm id:~w...~n",[HouseholdId]),
+			{next_state, normal, State, 10000};
+		_ ->
+			io:format("Unknown event. Staying NORMAL.~n"),
+			{next_state, normal, State, 2000}
+	end.		
 
 
 %%GEN FSM BEHAVIOUR TEMPLATE

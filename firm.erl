@@ -2,7 +2,7 @@
 -behavior(gen_fsm).
 
 % public API
--export([start/1, start_link/1, daily_step/3, first_day_of_month/3, last_day_of_month/3, buy_goods/2, work_position_accepted/1, get_fsm_value/2, get_fsm_values/2]).
+-export([start/1, start_link/1, daily_step/3, first_day_of_month/3, last_day_of_month/3, buy_goods/2, work_position_accepted/1, get_fsm_state/1, get_fsm_value/2, get_fsm_values/2]).
 
 %% gen_fsm callbacks
 -export([init/1,
@@ -42,6 +42,10 @@ buy_goods(FirmId, Quantity) ->
 work_position_accepted(FirmId) ->
 	io:format("Accepting job position in firm id:~w~n",[FirmId]),
 	gen_fsm:send_event(firm_state:firm_id_to_atom(FirmId), work_position_accepted). %We do not care about return value
+	
+get_fsm_state(FirmId) ->
+	FirmState = gen_fsm:sync_send_event(firm_state:firm_id_to_atom(FirmId), get_state),
+	FirmState.
 	
 get_fsm_value(Arg, FirmId) -> 
 	FirmState = gen_fsm:sync_send_event(firm_state:firm_id_to_atom(FirmId), get_state),

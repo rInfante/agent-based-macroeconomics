@@ -5,7 +5,9 @@
 			choose_weighted_random_item/1,
 			choose_random_item/1,			
 			replace_item_in_list/3,
-			list_of_key_list_pairs_to_list_of_key_length_pairs/1
+			list_of_key_list_pairs_to_list_of_key_length_pairs/1,
+			dash_delimited_integer_list/1,
+			truncate_last/1
 		]
 		).
 %%test
@@ -73,3 +75,9 @@ replace_item_in_list(List, CurrentItem, NewItem) ->
 %%Returns a {Key, Quantity} tuple list (aka ItemQuantityTupleList)
 list_of_key_list_pairs_to_list_of_key_length_pairs(KeyListPairs) ->
 	lists:map(fun({Key, List}) -> {Key, length(List)} end, KeyListPairs).
+
+dash_delimited_integer_list(L) ->
+	truncate_last(lists:flatten(lists:map(fun(X)->integer_to_list(X) ++ "-" end, L))).
+	
+truncate_last(L)->
+	lists:reverse(tl(lists:reverse(L))).	

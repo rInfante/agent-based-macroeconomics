@@ -31,6 +31,7 @@ new_step(StepNumber) ->
 %GEN_FSM CALLBACKS
 init(SimState) ->
 	io:format("initialising SIM state~n"),
+	firm_state_csv:write_header(),
 	{ok, normal, SimState, 0}.
 
 normal(Event, State) ->
@@ -45,8 +46,14 @@ normal(Event, State) ->
 				true ->
 					MonthNumber = 1 + (StepNumber div DaysInOneMonth),
 					io:format("This step is the first day of the month. Month number: ~w~n",[MonthNumber]),
-					lists:foreach(fun(Id)->firm:first_day_of_month(Id, MonthNumber, State) end, FirmIds),				
+					lists:foreach(fun(Id)->firm:first_day_of_month(Id, MonthNumber, State) end, FirmIds),	
+					lists:foreach(fun(Id)->
+											FirmState=firm:get_fsm_state(Id),
+											firm_state_csv:write_data(StepNumber, start_month, FirmState)
+								  end, FirmIds),
+					
 					lists:foreach(fun(Id)->household:first_day_of_month(Id, MonthNumber, State) end, HouseholdIds);
+							
 				false ->
 					io:format("This step is NOT the first day of the month.~n",[])
 			end,
@@ -55,12 +62,22 @@ normal(Event, State) ->
 					MonthNumber1 = StepNumber div DaysInOneMonth,
 					io:format("This step is the last day of the month. Month number: ~w~n",[MonthNumber1]),		
 					lists:foreach(fun(Id)->household:last_day_of_month(Id, MonthNumber1, State) end, HouseholdIds),
+					lists:foreach(fun(Id)->
+											FirmState=firm:get_fsm_state(Id),
+											firm_state_csv:write_data(StepNumber, end_month, FirmState)
+								  end, FirmIds),
+					
 					lists:foreach(fun(Id)->firm:last_day_of_month(Id, MonthNumber1, State) end, FirmIds); 						
 				false ->
 					io:format("This step is NOT the last day of the month.~n",[])
 			end,
 			lists:foreach(fun(Id)->household:daily_step(Id, StepNumber, State) end, HouseholdIds), 
+			
 			lists:foreach(fun(Id)->firm:daily_step(Id, StepNumber, State) end, FirmIds), 
+			lists:foreach(fun(Id)->
+							FirmState=firm:get_fsm_state(Id),
+							firm_state_csv:write_data(StepNumber, daily, FirmState)
+						end, FirmIds),
 			
 			FirmEmployeesLookup = sim_state:get_value(firm_employees_lookup, State),
 			NewFirmEmployeesLookup = lists:map(fun(Id)-> {Id, firm:get_fsm_value(employee_ids, Id)} end, FirmIds), 
