@@ -32,6 +32,7 @@ new_step(StepNumber) ->
 init(SimState) ->
 	io:format("initialising SIM state~n"),
 	firm_state_csv:write_header(),
+	household_state_csv:write_header(),
 	{ok, normal, SimState, 0}.
 
 normal(Event, State) ->
@@ -52,8 +53,11 @@ normal(Event, State) ->
 											firm_state_csv:write_data(StepNumber, start_month, FirmState)
 								  end, FirmIds),
 					
-					lists:foreach(fun(Id)->household:first_day_of_month(Id, MonthNumber, State) end, HouseholdIds);
-							
+					lists:foreach(fun(Id)->household:first_day_of_month(Id, MonthNumber, State) end, HouseholdIds),
+					lists:foreach(fun(Id)->
+											HouseholdState=household:get_fsm_state(Id),
+											household_state_csv:write_data(StepNumber, start_month, HouseholdState)
+								  end, HouseholdIds);	
 				false ->
 					io:format("This step is NOT the first day of the month.~n",[])
 			end,
@@ -67,11 +71,19 @@ normal(Event, State) ->
 											firm_state_csv:write_data(StepNumber, end_month, FirmState)
 								  end, FirmIds),
 					
-					lists:foreach(fun(Id)->firm:last_day_of_month(Id, MonthNumber1, State) end, FirmIds); 						
+					lists:foreach(fun(Id)->firm:last_day_of_month(Id, MonthNumber1, State) end, FirmIds),
+					lists:foreach(fun(Id)->
+											HouseholdState=household:get_fsm_state(Id),
+											household_state_csv:write_data(StepNumber, end_month, HouseholdState)
+								  end, HouseholdIds);						
 				false ->
 					io:format("This step is NOT the last day of the month.~n",[])
 			end,
 			lists:foreach(fun(Id)->household:daily_step(Id, StepNumber, State) end, HouseholdIds), 
+			lists:foreach(fun(Id)->
+							HouseholdState=household:get_fsm_state(Id),
+							household_state_csv:write_data(StepNumber, daily, HouseholdState)
+						end, HouseholdIds),			
 			
 			lists:foreach(fun(Id)->firm:daily_step(Id, StepNumber, State) end, FirmIds), 
 			lists:foreach(fun(Id)->

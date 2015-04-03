@@ -34,7 +34,7 @@ last_day_of_month(HouseholdId, MonthNumber, SimState) ->
 	evolve_claimed_wage_rate(HouseholdId, SimState).
 	
 get_fsm_state(HouseholdId) ->
-	HouseholdState = gen_fsm:sync_send_event(household_state:firm_id_to_atom(HouseholdId), get_state),
+	HouseholdState = gen_fsm:sync_send_event(household_state:household_id_to_atom(HouseholdId), get_state),
 	HouseholdState.	
 	
 %Called by employer firm

@@ -13,7 +13,10 @@ get_value(liquidity_h, HouseholdState) ->
 get_value(planned_monthly_consumption_expenditure, HouseholdState) ->
 	HouseholdState#household_state.planned_monthly_consumption_expenditure;
 get_value(provider_firms_ids, HouseholdState) ->
-	HouseholdState#household_state.provider_firms_ids;	
+	HouseholdState#household_state.provider_firms_ids;
+get_value(dash_delimited_provider_firms_ids, HouseholdState) ->
+	ProviderFirmsIds = HouseholdState#household_state.provider_firms_ids,
+	item_selection:dash_delimited_integer_list(ProviderFirmsIds);	
 get_value(employer_firm_id, HouseholdState) ->
 	HouseholdState#household_state.employer_firm_id;
 	
@@ -22,7 +25,7 @@ get_value(household_id_as_atom, HouseholdState) ->
 	household_id_to_atom(FirmId).	
 	
 get_all_fields()->
-	[household_id, reservation_wage_rate_h, liquidity_h, planned_monthly_consumption_expenditure, provider_firms_ids, employer_firm_id].	
+	[household_id, reservation_wage_rate_h, liquidity_h, planned_monthly_consumption_expenditure, dash_delimited_provider_firms_ids, employer_firm_id].	
 	
 get_values(Args, HouseholdState) ->
 	[get_value(Arg, HouseholdState) || Arg <- Args].

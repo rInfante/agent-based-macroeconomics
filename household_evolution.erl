@@ -152,6 +152,8 @@ transact_with_provider_firm(AttemptCycle, MaxNumAttempts, PlannedDailyConsumptio
 	ChosenProviderFirmId = choose_random_provider_firm_id(HouseholdState),
 	ChosenProviderFirmInventory = firm:get_fsm_value(inventory_f, ChosenProviderFirmId),
 	ChosenProviderFirmPrice = firm:get_fsm_value(price_f, ChosenProviderFirmId),
+	io:format("transact_with_provider_firm - Household ID:~w, AttemptCycle:~w, MaxNumAttempts:~w, PlannedDailyConsumptionDemand:~w, CurrentHouseholdAgentLiquidity:~w, ChosenProviderFirmId:~w, ChosenProviderFirmPrice:~w~n", 
+		[HouseholdState#household_state.household_id, AttemptCycle, MaxNumAttempts, PlannedDailyConsumptionDemand, CurrentHouseholdAgentLiquidity, ChosenProviderFirmId, ChosenProviderFirmPrice]),
 	case (ChosenProviderFirmInventory > PlannedDailyConsumptionDemand)
 		  and (CurrentHouseholdAgentLiquidity >= ChosenProviderFirmPrice * PlannedDailyConsumptionDemand) of
 		true ->
@@ -160,7 +162,7 @@ transact_with_provider_firm(AttemptCycle, MaxNumAttempts, PlannedDailyConsumptio
 		false ->
 			case (CurrentHouseholdAgentLiquidity < ChosenProviderFirmPrice * PlannedDailyConsumptionDemand) of
 				true ->
-					AdjustedDailyConsumptionDemand = CurrentHouseholdAgentLiquidity div ChosenProviderFirmPrice,
+					AdjustedDailyConsumptionDemand = trunc(CurrentHouseholdAgentLiquidity) div trunc(ChosenProviderFirmPrice),
 					PurchaseCost = firm:buy_goods(ChosenProviderFirmId, AdjustedDailyConsumptionDemand),
 					CurrentHouseholdAgentLiquidity - PurchaseCost; %%the result should be next to 0.0 but not exactly 0.0 (because we don't by half item)
 				false ->
