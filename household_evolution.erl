@@ -187,12 +187,12 @@ evolve_liquidity_from_receiving_salary(HouseholdState, FirmWageRate) ->
 
 evolve_claimed_wage_rate(HouseholdState, SimState) ->
 	ClaimedWageRatePercentageReductionIfUnemployed = sim_state:get_value(claimed_wage_rate_percentage_reduction_if_unemployed, SimState),
-	[EmployerFirmId, HouseholdWageRate] = household_state:get_values([employer_firm_id, reservation_wage_rate_h], HouseholdState),
-	FirmWageRate = firm:get_fsm_value(wage_rate_f, EmployerFirmId),
+	[EmployerFirmId, HouseholdWageRate] = household_state:get_values([employer_firm_id, reservation_wage_rate_h], HouseholdState),	
 	case (EmployerFirmId == 0) of
 		true -> %%unemployed
 			(1.0 - ClaimedWageRatePercentageReductionIfUnemployed) * HouseholdWageRate;
 		false -> %%employed
+			FirmWageRate = firm:get_fsm_value(wage_rate_f, EmployerFirmId),
 			case (FirmWageRate > HouseholdWageRate) of
 				true ->
 					FirmWageRate;
