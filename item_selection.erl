@@ -76,6 +76,8 @@ replace_item_in_list(List, CurrentItem, NewItem) ->
 list_of_key_list_pairs_to_list_of_key_length_pairs(KeyListPairs) ->
 	lists:map(fun({Key, List}) -> {Key, length(List)} end, KeyListPairs).
 
+dash_delimited_integer_list([]) ->
+	"0";
 dash_delimited_integer_list(L) ->
 	truncate_last(lists:flatten(lists:map(fun(X)->integer_to_list(X) ++ "-" end, L))).
 	

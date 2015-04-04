@@ -55,8 +55,8 @@ evolve_provider_firm_ids(HouseholdState, SimState) ->
 choose_unconnected_firm_id_randomly_weighted_on_employee_count(HouseholdState, SimState) ->
 	UnconnectedFirmsIds = select_unconnected_firm_ids(HouseholdState, SimState),
 	UnconnectedFirmsIdsSet = sets:from_list(UnconnectedFirmsIds),
-	ProviderFirmIds = household_state:get_value(provider_firms_ids, HouseholdState),
-	FirmsWeightedOnEmployeeCount = item_selection:list_of_key_list_pairs_to_list_of_key_length_pairs(ProviderFirmIds),
+	FirmsEmployeeLookups = sim_state:get_value(firm_employees_lookup, SimState),
+	FirmsWeightedOnEmployeeCount = item_selection:list_of_key_list_pairs_to_list_of_key_length_pairs(FirmsEmployeeLookups),
 	UnconnectedFirmsIdsWeightedOnEmployeeCount = lists:filter(
 		fun({FirmId, _EmployeeCount})-> sets:is_element(FirmId, UnconnectedFirmsIdsSet) end, FirmsWeightedOnEmployeeCount),
 	RandomFirmId = item_selection:choose_weighted_random_item(UnconnectedFirmsIdsWeightedOnEmployeeCount),
