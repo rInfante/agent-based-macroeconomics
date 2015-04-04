@@ -157,6 +157,8 @@ evolve_liquidity_from_paying_salaries(FirmState) ->
     PaidSalaries = NumEmployees * WageRate,
 	lists:foreach(fun(EmployeeId)-> household:pay_salary(EmployeeId, WageRate) end, EmployeeIds),
     if 
+		NumEmployees == 0 -> 
+			0.0;			
 		FirmLiquidity /= PaidSalaries ->	
 			PnL = FirmLiquidity - PaidSalaries,
 			EmployeePnL = PnL / NumEmployees,
