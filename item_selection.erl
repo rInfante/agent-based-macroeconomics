@@ -51,10 +51,16 @@ choose_weighted_random_item(ItemQuantityTupleList) ->
 	{CumulativeQuantities, TotalQuantity} = cumulative_quantities(OnlyQuantities),
 	CumulativeRanges = cumulative_ranges(CumulativeQuantities),
 	IndexedCumulativeRanges = indexed_items(CumulativeRanges),
-	RandomChoice = random:uniform(TotalQuantity),
-	[{Index, {_,_}}] = find_indexed_cumulative_range(IndexedCumulativeRanges,RandomChoice),
-	{Item, _} = lists:nth(Index, ItemQuantityTupleList),
-	Item.
+	case (TotalQuantity > 0) of
+		true ->
+			RandomChoice = random:uniform(TotalQuantity),
+			[{Index, {_,_}}] = find_indexed_cumulative_range(IndexedCumulativeRanges,RandomChoice),
+			{Item, _} = lists:nth(Index, ItemQuantityTupleList),
+			Item;
+		false ->
+			{Item0, _} = lists:nth(1, ItemQuantityTupleList),
+			Item0
+	end.
 	
 choose_random_item(ItemList) ->
 	ItemQuantityTupleList = lists:map(fun(Item) -> {Item, 1} end, ItemList),
@@ -73,6 +79,8 @@ replace_item_in_list(List, CurrentItem, NewItem) ->
 
 %%KeyListPairs = similar to:[{1, [1,5]}, {2, [2,6]}, {3,[3,7]}, {4,[4,8]}, {5,[9,13]}, {6,[10,14]}, {7,[11,15]}, {8,[12,16]}]
 %%Returns a {Key, Quantity} tuple list (aka ItemQuantityTupleList)
+list_of_key_list_pairs_to_list_of_key_length_pairs([]) -> 
+	[];
 list_of_key_list_pairs_to_list_of_key_length_pairs(KeyListPairs) ->
 	lists:map(fun({Key, List}) -> {Key, length(List)} end, KeyListPairs).
 

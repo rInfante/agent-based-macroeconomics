@@ -67,6 +67,8 @@ evolve_fired_employee_id(FirmState, SimState) ->
     {_, InventoryUpperLimit} = inventory_lower_upper_limits(FirmState, SimState),
 	[Inventory, EmployeeIds] = firm_state:get_values([inventory_f, employee_ids], FirmState),
 	if
+		length(EmployeeIds) == 0 ->
+			0; %employee_id = 0 means no employee has been fired	
 		Inventory > InventoryUpperLimit ->
 			FiredEmployeeId = item_selection:choose_random_item(EmployeeIds),
 			household:fire_employee(FiredEmployeeId),

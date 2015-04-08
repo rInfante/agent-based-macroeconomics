@@ -319,4 +319,4 @@ test() ->
 			Household5, Household6, Household7, Household8,
 			Household9, Household10, Household11, Household12,
 			Household13, Household14, Household15, Household16]),
-    lists:foreach(fun(I)-> sim:new_step(I) end, lists:seq(1, 42)).
+    lists:foreach(fun(I)-> sim:new_step(I) end, lists:seq(1, 150)).
